@@ -12,21 +12,30 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
+# import environ
+from datetime import timedelta
+# from corsheaders.defaults import default_headers
+
+# env_dir = environ.Path(__file__) - 2
+# env = environ.Env()
+# env.read_env(env_file = env_dir('.env'))
+
+# ENVIRON = env
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@id0o$(dxvvxnp7x%c%t(bkzb823$wksatj)sg0hg4*vj+1v$&'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(int(os.environ.get('DEBUG'))) or False
 
 ALLOWED_HOSTS = []
+ALLOWED_HOSTS_ENV=os.environ.get('ALLOWED_HOSTS')
+if ALLOWED_HOSTS_ENV:
+    ALLOWED_HOSTS.extend(ALLOWED_HOSTS_ENV.split(','))
 
 
 # Application definition
