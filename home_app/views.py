@@ -7,7 +7,7 @@ from home_app.models import UserModel
 from home_app.serializers import UserSerializers
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication 
-
+from rest_framework.decorators import action
 class UserViewset(viewsets.ModelViewSet):
     
     queryset=UserModel.objects.all()
@@ -24,3 +24,12 @@ class UserViewset(viewsets.ModelViewSet):
                 serializers.save()
                 return Response(serializers.data)
         return super().create(request, *args, **kwargs)
+
+class TestViewset(viewsets.ModelViewSet):
+    
+    queryset=UserModel.objects.all()
+    serializer_class=UserSerializers
+    authentication_classes=[]
+    permission_classes = []
+
+    http_method_names = ['get',]
