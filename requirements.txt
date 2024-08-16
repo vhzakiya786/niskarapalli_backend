@@ -1,0 +1,4 @@
+djangorestframework==3.15.2
+pygsheets==2.0.6
+requests==2.32.3
+
