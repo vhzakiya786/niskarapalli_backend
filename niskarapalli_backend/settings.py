@@ -13,15 +13,15 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import os
-# import environ
+import environ
 from datetime import timedelta
 # from corsheaders.defaults import default_headers
 
-# env_dir = environ.Path(__file__) - 2
-# env = environ.Env()
-# env.read_env(env_file = env_dir('.env'))
+env_dir = environ.Path(__file__) - 2
+env = environ.Env()
+env.read_env(env_file = env_dir('.env'))
 
-# ENVIRON = env
+ENVIRON = env
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
