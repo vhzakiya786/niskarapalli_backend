@@ -8,6 +8,6 @@ router=routers.SimpleRouter()
 
 
 router.register(r'user',UserViewset,basename='user')
-router.register(r'test',TestViewset,basename='test')
+router.register(r'name',TestViewset,basename='test')
 
 urlpatterns=router.urls
