@@ -33,3 +33,10 @@ class TestViewset(viewsets.ModelViewSet):
     permission_classes = []
 
     http_method_names = ['get',]
+
+    def list(self, request, *args, **kwargs):
+        search=request.GET.get("search")
+
+        if search:
+            self.queryset=self.queryset.filter(name__icontains=search)
+        return super().list(request, *args, **kwargs)
