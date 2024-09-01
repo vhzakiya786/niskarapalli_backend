@@ -5,11 +5,10 @@
     <title>Edit User</title>
     <script>
         function updateAmount() {
-            // Get the selected month and the amount field
             var selectedMonth = document.getElementById('month').value;
             var amountField = document.getElementById('amount');
             
-            // Update the amount field based on the selected month
+            // Get the amount for the selected month
             var amountValue = document.getElementById('amount-' + selectedMonth).value;
             amountField.value = amountValue;
         }

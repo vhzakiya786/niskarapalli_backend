@@ -2,6 +2,20 @@
 <html>
 <head>
     <title>User Search</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
     <h1>User Search</h1>
@@ -17,7 +31,16 @@
                 <th>Mobile</th>
                 <th>January</th>
                 <th>February</th>
-                <!-- Add headers for other months -->
+                <th>March</th>
+                <th>April</th>
+                <th>May</th>
+                <th>June</th>
+                <th>July</th>
+                <th>August</th>
+                <th>September</th>
+                <th>October</th>
+                <th>November</th>
+                <th>December</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -28,17 +51,43 @@
                 <td>{{ user.mobile }}</td>
                 <td>{{ user.jan }}</td>
                 <td>{{ user.feb }}</td>
-                <!-- Add cells for other months -->
+                <td>{{ user.march }}</td>
+                <td>{{ user.april }}</td>
+                <td>{{ user.may }}</td>
+                <td>{{ user.june }}</td>
+                <td>{{ user.july }}</td>
+                <td>{{ user.august }}</td>
+                <td>{{ user.september }}</td>
+                <td>{{ user.october }}</td>
+                <td>{{ user.november }}</td>
+                <td>{{ user.december }}</td>
                 <td>
                     <a href="{% url 'user_edit' user.id %}">Edit</a>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5">No results found</td>
+                <td colspan="15">No results found</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <h2>Create New User</h2>
+    <form method="POST" action="{% url 'user_create' %}">
+        {% csrf_token %}
+        <label for="name">Name:</label>
+        <input type="text" name="name" id="name" required>
+
+        <label for="mobile">Mobile:</label>
+        <input type="text" name="mobile" id="mobile" required>
+
+        <!-- Optionally, you can add fields for other default values -->
+        <!-- For example, you might set default values for monthly fields -->
+        
+        <button type="submit">Create</button>
+    </form>
+
+    <a href="{% url 'user_search' %}">Back to Search</a>
 </body>
 </html>

@@ -120,12 +120,14 @@ def user_edit(request, user_id):
                     'user': user,
                     'selected_month': selected_month,
                     'error_message': str(e),
+                    'months': ['jan', 'feb', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'],
                 })
         else:
             return render(request, 'user_edit.html', {
                 'user': user,
                 'selected_month': selected_month,
                 'error_message': 'Amount cannot be empty.',
+                'months': ['jan', 'feb', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'],
             })
     else:
         selected_month = request.GET.get('month', 'jan')
@@ -136,3 +138,30 @@ def user_edit(request, user_id):
         'months': ['jan', 'feb', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'],
     }
     return render(request, 'user_edit.html', context)
+
+
+def user_create(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        mobile = request.POST.get('mobile')
+        
+        # Optionally, set default values for monthly fields if needed
+        UserModel.objects.create(
+            name=name,
+            mobile=mobile,
+            jan=None,
+            feb=None,
+            march=None,
+            april=None,
+            may=None,
+            june=None,
+            july=None,
+            august=None,
+            september=None,
+            october=None,
+            november=None,
+            december=None
+        )
+        return redirect('user_search')
+    
+    return redirect('user_search')    
