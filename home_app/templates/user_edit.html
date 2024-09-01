@@ -1,0 +1,57 @@
+{% load custom_filters %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit User</title>
+    <script>
+        function updateAmount() {
+            // Get the selected month and the amount field
+            var selectedMonth = document.getElementById('month').value;
+            var amountField = document.getElementById('amount');
+            
+            // Update the amount field based on the selected month
+            var amountValue = document.getElementById('amount-' + selectedMonth).value;
+            amountField.value = amountValue;
+        }
+    </script>
+</head>
+<body>
+    <h1>Edit User</h1>
+    <form method="POST">
+        {% csrf_token %}
+        
+        <label for="month">Select Month:</label>
+        <select name="month" id="month" onchange="updateAmount()">
+            <option value="jan" {% if selected_month == 'jan' %}selected{% endif %}>January</option>
+            <option value="feb" {% if selected_month == 'feb' %}selected{% endif %}>February</option>
+            <option value="march" {% if selected_month == 'march' %}selected{% endif %}>March</option>
+            <option value="april" {% if selected_month == 'april' %}selected{% endif %}>April</option>
+            <option value="may" {% if selected_month == 'may' %}selected{% endif %}>May</option>
+            <option value="june" {% if selected_month == 'june' %}selected{% endif %}>June</option>
+            <option value="july" {% if selected_month == 'july' %}selected{% endif %}>July</option>
+            <option value="august" {% if selected_month == 'august' %}selected{% endif %}>August</option>
+            <option value="september" {% if selected_month == 'september' %}selected{% endif %}>September</option>
+            <option value="october" {% if selected_month == 'october' %}selected{% endif %}>October</option>
+            <option value="november" {% if selected_month == 'november' %}selected{% endif %}>November</option>
+            <option value="december" {% if selected_month == 'december' %}selected{% endif %}>December</option>
+        </select>
+
+        <!-- Hidden fields for each month's amount -->
+        {% for month in months %}
+            <input type="hidden" id="amount-{{ month }}" value="{{ user|get_attr:month }}">
+        {% endfor %}
+
+        <!-- Display the field for the selected month -->
+        <label for="amount">Amount:</label>
+        <input type="number" name="amount" id="amount" step="0.01" value="{{ user|get_attr:selected_month }}">
+
+        {% if error_message %}
+        <p style="color: red;">{{ error_message }}</p>
+        {% endif %}
+
+        <button type="submit">Save</button>
+    </form>
+    
+    <a href="{% url 'user_search' %}">Back to Search</a>
+</body>
+</html>

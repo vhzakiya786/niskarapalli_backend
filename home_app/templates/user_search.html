@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Search</title>
+</head>
+<body>
+    <h1>User Search</h1>
+    <form method="GET" action="{% url 'user_search' %}">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search by name or mobile">
+        <button type="submit">Search</button>
+    </form>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Mobile</th>
+                <th>January</th>
+                <th>February</th>
+                <!-- Add headers for other months -->
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.name }}</td>
+                <td>{{ user.mobile }}</td>
+                <td>{{ user.jan }}</td>
+                <td>{{ user.feb }}</td>
+                <!-- Add cells for other months -->
+                <td>
+                    <a href="{% url 'user_edit' user.id %}">Edit</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No results found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

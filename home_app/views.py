@@ -7,6 +7,10 @@ from home_app.models import UserModel
 from home_app.serializers import UserSerializers
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication 
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import UserModel
+from .forms import UserModelForm
+from django.db.models import Q
 from rest_framework.decorators import action
 class UserViewset(viewsets.ModelViewSet):
     
@@ -40,3 +44,95 @@ class TestViewset(viewsets.ModelViewSet):
         if search:
             self.queryset=self.queryset.filter(name__icontains=search)
         return super().list(request, *args, **kwargs)
+
+    @action(methods=['post','get'],detail=False)
+    def user_search(self,request,**kwargs):
+        query = request.GET.get('q', '')
+        if query:
+            users = UserModel.objects.filter(
+                Q(name__icontains=query) | Q(mobile__icontains=query)
+            )
+        else:
+            users = UserModel.objects.all()
+
+        context = {
+            'users': users,
+            'query': query,
+        }
+        return render(request, 'user_search.html', context)
+
+    @action(methods=['post','get'],detail=True)
+    def user_edit(self,request, user_id):
+        user = get_object_or_404(UserModel, id=user_id)
+        if request.method == 'POST':
+            form = UserModelForm(request.POST, instance=user)
+            if form.is_valid():
+                form.save()
+                return redirect('user_search')
+        else:
+            form = UserModelForm(instance=user)
+
+        context = {
+            'form': form,
+            'user': user,
+        }
+        return render(request, 'user_edit.html', context)
+
+def user_search(request):
+    query = request.GET.get('q', '')
+    if query:
+        users = UserModel.objects.filter(
+            Q(name__icontains=query) | Q(mobile__icontains=query)
+        )
+    else:
+        users = UserModel.objects.all()
+
+    context = {
+        'users': users,
+        'query': query,
+    }
+    return render(request, 'user_search.html', context)
+
+from django.core.exceptions import ValidationError
+from .models import UserModel
+
+def user_edit(request, user_id):
+    user = get_object_or_404(UserModel, id=user_id)
+    
+    if request.method == 'POST':
+        selected_month = request.POST.get('month')
+        amount = request.POST.get('amount')
+        
+        if selected_month and amount:
+            try:
+                # Convert amount to a Decimal, ensuring it's valid
+                from decimal import Decimal
+                decimal_amount = Decimal(amount)
+                
+                # Set the value for the selected month
+                setattr(user, selected_month, decimal_amount)
+                user.save()
+                
+                return redirect('user_search')
+            except (ValueError, ValidationError, ArithmeticError) as e:
+                # Handle conversion errors
+                return render(request, 'user_edit.html', {
+                    'user': user,
+                    'selected_month': selected_month,
+                    'error_message': str(e),
+                })
+        else:
+            return render(request, 'user_edit.html', {
+                'user': user,
+                'selected_month': selected_month,
+                'error_message': 'Amount cannot be empty.',
+            })
+    else:
+        selected_month = request.GET.get('month', 'jan')
+
+    context = {
+        'user': user,
+        'selected_month': selected_month,
+        'months': ['jan', 'feb', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'],
+    }
+    return render(request, 'user_edit.html', context)
