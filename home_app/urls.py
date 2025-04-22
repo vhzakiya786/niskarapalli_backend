@@ -23,4 +23,4 @@ urlpatterns = [
     path('check_user_by_upi/', views.check_user_by_upi, name='check_user_by_upi'),
 ]
 
-urlpatterns+=router.urls
+urlpatterns=urlpatterns+router.urls
