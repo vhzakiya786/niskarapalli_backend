@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; }
+        .select2-container { width: 100% !important; }
+    </style>
+</head>
+<body>
+    <form id="userForm" method="post" action="{% url 'user_create_update' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="name">Name</label>
+            <select id="name" name="name" class="searchable"></select>
+        </div>
+        <div class="form-group">
+            <label for="mobile">Mobile</label>
+            <select id="mobile" name="mobile" class="searchable"></select>
+        </div>
+        <div class="form-group">
+            <label for="offer">Offer</label>
+            <input type="checkbox" id="offer" name="offer">
+        </div>
+        <div class="form-group">
+            <label for="offer_description">Offer Description</label>
+            <input type="text" id="offer_description" name="offer_description">
+        </div>
+        <div class="form-group">
+            <label for="year">Year</label>
+            <input type="text" id="year" name="year" maxlength="10">
+        </div>
+        <div class="form-group">
+            <label for="upi_id1">UPI ID 1</label>
+            <select id="upi_id1" name="upi_id1" class="searchable"></select>
+        </div>
+        <div class="form-group">
+            <label for="upi_id2">UPI ID 2</label>
+            <select id="upi_id2" name="upi_id2" class="searchable"></select>
+        </div>
+        <div class="form-group">
+            <label for="upi_id3">UPI ID 3</label>
+            <select id="upi_id3" name="upi_id3" class="searchable"></select>
+        </div>
+        <div class="form-group">
+            <label for="upi_id4">UPI ID 4</label>
+            <select id="upi_id4" name="upi_id4" class="searchable"></select>
+        </div>
+        <div class="form-group">
+            <label for="jan">January</label>
+            <input type="number" id="jan" name="jan" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="feb">February</label>
+            <input type="number" id="feb" name="feb" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="march">March</label>
+            <input type="number" id="march" name="march" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="april">April</label>
+            <input type="number" id="april" name="april" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="may">May</label>
+            <input type="number" id="may" name="may" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="june">June</label>
+            <input type="number" id="june" name="june" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="july">July</label>
+            <input type="number" id="july" name="july" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="august">August</label>
+            <input type="number" id="august" name="august" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="september">September</label>
+            <input type="number" id="september" name="september" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="october">October</label>
+            <input type="number" id="october" name="october" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="november">November</label>
+            <input type="number" id="november" name="november" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="december">December</label>
+            <input type="number" id="december" name="december" step="0.01">
+        </div>
+        <button type="button" id="newRecord">New Record</button>
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        $(document).ready(function() {
+            $('.searchable').select2({
+                tags: true,
+                createTag: function(params) {
+                    return {
+                        id: params.term,
+                        text: params.term,
+                        newOption: true
+                    }
+                },
+                templateResult: function(data) {
+                    var $result = $('<span></span>');
+                    $result.text(data.text);
+                    if (data.newOption) {
+                        $result.append(' <em>(new)</em>');
+                    }
+                    return $result;
+                }
+            });
+
+            // Populate name and mobile dropdowns
+            $.ajax({
+                url: '{% url "get_users" %}',
+                method: 'GET',
+                success: function(data) {
+                    $('#name').select2({
+                        data: data.names.map(function(name) {
+                            return { id: name, text: name };
+                        }),
+                        tags: true
+                    });
+                    $('#mobile').select2({
+                        data: data.mobiles.map(function(mobile) {
+                            return { id: mobile, text: mobile };
+                        }),
+                        tags: true
+                    });
+                }
+            });
+
+            // Populate UPI ID dropdowns
+            function populateUpiDropdowns() {
+                $.ajax({
+                    url: '{% url "get_upi_ids" %}',
+                    method: 'GET',
+                    success: function(data) {
+                        ['upi_id1', 'upi_id2', 'upi_id3', 'upi_id4'].forEach(function(field) {
+                            $(`#${field}`).select2({
+                                data: data.upi_ids.map(function(upi) {
+                                    return { id: upi, text: upi };
+                                }),
+                                tags: true
+                            });
+                        });
+                    }
+                });
+            }
+
+            populateUpiDropdowns();
+
+            // New Record button
+            $('#newRecord').click(function() {
+                $('#userForm')[0].reset();
+                $('.searchable').val(null).trigger('change');
+            });
+
+            // Handle UPI ID logic
+            $('#upi_id1').on('change', function() {
+                let selectedUpi = $(this).val();
+                if (selectedUpi) {
+                    $.ajax({
+                        url: '{% url "check_user_by_upi" %}',
+                        method: 'GET',
+                        data: { upi_id: selectedUpi },
+                        success: function(data) {
+                            if (data.user) {
+                                $('#name').val(data.user.name).trigger('change');
+                                $('#mobile').val(data.user.mobile).trigger('change');
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
