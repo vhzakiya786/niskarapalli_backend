@@ -165,3 +165,59 @@ def user_create(request):
         return redirect('user_search')
     
     return redirect('user_search')    
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from .models import UserModel
+from .forms import UserForm
+from django.urls import reverse_lazy
+
+def user_create_update(request):
+    if request.method == 'POST':
+        form = UserForm(request.POST)
+        if form.is_valid():
+            # Check if user exists by name or mobile
+            name = form.cleaned_data['name']
+            mobile = form.cleaned_data['mobile']
+            user = UserModel.objects.filter(name=name, mobile=mobile).first()
+            
+            if user:
+                # Update existing user
+                for field, value in form.cleaned_data.items():
+                    setattr(user, field, value)
+                user.save()
+            else:
+                # Create new user
+                form.save()
+            return redirect('user_create_update')
+    else:
+        form = UserForm()
+    
+    return render(request, 'admin/user_form.html', {'form': form})
+
+def get_users(request):
+    users = UserModel.objects.all()
+    names = list(set(user.name for user in users if user.name))
+    mobiles = list(set(user.mobile for user in users if user.mobile))
+    return JsonResponse({'names': names, 'mobiles': mobiles})
+
+def get_upi_ids(request):
+    users = UserModel.objects.all()
+    upi_ids = set()
+    for user in users:
+        for field in ['upi_id1', 'upi_id2', 'upi_id3', 'upi_id4']:
+            upi = getattr(user, field)
+            if upi:
+                upi_ids.add(upi)
+    return JsonResponse({'upi_ids': list(upi_ids)})
+
+def check_user_by_upi(request):
+    upi_id = request.GET.get('upi_id')
+    user = UserModel.objects.filter(upi_id1=upi_id).first()
+    if user:
+        return JsonResponse({
+            'user': {
+                'name': user.name,
+                'mobile': user.mobile
+            }
+        })
+    return JsonResponse({'user': None})
