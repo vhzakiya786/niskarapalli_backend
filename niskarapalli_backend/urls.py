@@ -18,9 +18,14 @@ from django.contrib import admin
 from django.urls import path,include
 
 from user_app.views import Login
-
+from home_app import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('home_app.urls')),
-    path('login/',Login.as_view(),name='login')
+    path('login/',Login.as_view(),name='login'),
+
+    path('home', views.user_create_update, name='user_create_update'),
+    path('get_users/', views.get_users, name='get_users'),
+    path('get_upi_ids/', views.get_upi_ids, name='get_upi_ids'),
+    path('check_user_by_upi/', views.check_user_by_upi, name='check_user_by_upi'),
 ]
