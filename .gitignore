@@ -4,6 +4,7 @@ __pycache__
 pallienv/
 sheet.py
 google_key/
+db.sqlite3
 
 
 .env
