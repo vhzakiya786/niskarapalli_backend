@@ -4,6 +4,8 @@ from rest_framework import routers
 from home_app.views import TestViewset, UserViewset, user_create, user_edit, user_search
 from . import views
 
+from . import views
+from home_app.views import TestViewset, UserViewset
 from django.urls import path
 router=routers.SimpleRouter()
 
