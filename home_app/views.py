@@ -8,7 +8,7 @@ from home_app.serializers import UserSerializers
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication 
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import UserModel
+from .models import UserModel, YearModel
 from .forms import UserModelForm
 from django.db.models import Q
 from rest_framework.decorators import action
@@ -17,7 +17,10 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth import login,authenticate,logout
 from django.contrib.auth.decorators import login_required
-
+from datetime import datetime
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from django.views.decorators.http import require_GET
 class UserViewset(viewsets.ModelViewSet):
     
     queryset=UserModel.objects.all()
@@ -84,25 +87,46 @@ class TestViewset(viewsets.ModelViewSet):
         }
         return render(request, 'user_edit.html', context)
 
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+
 @login_required(login_url="login")
 def user_search(request):
-    query = request.GET.get('q', '')
+    current_year = datetime.now().year
+    selected_year = int(request.GET.get('year', current_year))
+    query = request.GET.get('q', '').strip()
+
+    # Ensure year entries
+    existing_years = set(YearModel.objects.values_list('year', flat=True))
+    for y in range(2023, current_year + 1):
+        if y not in existing_years:
+            YearModel.objects.create(year=y)
+    years = list(YearModel.objects.values_list('year', flat=True).order_by('year'))
+
+    # Filter users
+    users = UserModel.objects.all()
     if query:
-        users = UserModel.objects.filter(
-            Q(name__icontains=query) | Q(mobile__icontains=query)
-        )
-    else:
-        users = UserModel.objects.all()
+        users = users.filter(Q(name__icontains=query) | Q(mobile__icontains=query))
+    users = users.filter(year=selected_year)
 
     context = {
         'users': users,
         'query': query,
+        'selected_year': selected_year,
+        'years': years
     }
+
+    # If AJAX, return partial HTML
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        html = render_to_string('partials/user_table.html', context, request=request)
+        return JsonResponse({'html': html})
+
     return render(request, 'user_search.html', context)
 
 from django.core.exceptions import ValidationError
 from .models import UserModel
 
+@login_required(login_url="login")
 def user_edit(request, user_id):
     user = get_object_or_404(UserModel, id=user_id)
     
@@ -146,16 +170,24 @@ def user_edit(request, user_id):
     }
     return render(request, 'user_edit.html', context)
 
-
+@login_required(login_url="login")
 def user_create(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         mobile = request.POST.get('mobile')
+        current_year=datetime.now().year
+        selected_year=int(request.GET.get('year', current_year))
+
+        obj=UserModel.objects.filter(name=name,mobile=mobile,year=selected_year).first()
+        if obj:
+            return redirect('user_search')
+
         
         # Optionally, set default values for monthly fields if needed
         UserModel.objects.create(
             name=name,
             mobile=mobile,
+            year=selected_year,
             jan=None,
             feb=None,
             march=None,
@@ -254,3 +286,25 @@ def user_login(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+@require_GET
+@login_required(login_url="login")
+def user_autocomplete(request):
+    query = request.GET.get('q', '').strip()
+    results = []
+    if query:
+        # Get all matches first
+        users = UserModel.objects.filter(name__icontains=query).values('mobile', 'name')
+        
+        # Keep first name per mobile number
+        seen_mobiles = set()
+        unique_results = []
+        for user in users:
+            mobile = user['mobile']
+            if mobile not in seen_mobiles:
+                unique_results.append({'name': user['name'], 'mobile': mobile})
+                seen_mobiles.add(mobile)
+        
+        results = unique_results
+
+    return JsonResponse({'results': results})

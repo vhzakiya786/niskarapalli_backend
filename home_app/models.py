@@ -69,6 +69,21 @@ class ReportModel(BaseModel):
 		return self.month
 
 
+from django.core.validators import MinValueValidator, MaxValueValidator
+
+
+class YearModel(BaseModel):
+	year = models.PositiveIntegerField(
+		unique=True,
+		validators=[
+			MinValueValidator(2023),
+			MaxValueValidator(2080)
+		]
+	)
+	class Meta:
+		db_table="years"
+	def __str__(self):
+		return self.year
 
 
 

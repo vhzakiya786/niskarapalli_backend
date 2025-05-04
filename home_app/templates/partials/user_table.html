@@ -1,0 +1,69 @@
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Mobile</th>
+            <th>January</th>
+            <th>February</th>
+            <th>March</th>
+            <th>April</th>
+            <th>May</th>
+            <th>June</th>
+            <th>July</th>
+            <th>August</th>
+            <th>September</th>
+            <th>October</th>
+            <th>November</th>
+            <th>December</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.name }}</td>
+            <td>{{ user.mobile }}</td>
+            <td style="background-color: {% if user.jan %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.jan|default:"X" }}
+            </td>
+            <td style="background-color: {% if user.feb %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.feb|default:"X" }}
+            </td>
+            <td style="background-color: {% if user.march %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.march|default:"X" }}
+            </td>
+            <td style="background-color: {% if user.april %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.april|default:"X" }}
+            </td>
+            <td style="background-color: {% if user.may %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.may|default:"X" }}
+            </td>
+            <td style="background-color: {% if user.june %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.june|default:"X" }}
+            </td>
+            <td style="background-color: {% if user.july %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.july|default:"X" }}
+            </td>
+            <td style="background-color: {% if user.august %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.august|default:"X" }}
+            </td>
+            <td style="background-color: {% if user.september %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.september|default:"X" }}
+            </td>
+            <td style="background-color: {% if user.october %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.october|default:"X" }}
+            </td>
+            <td style="background-color: {% if user.november %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.november|default:"X" }}
+            </td>
+            <td style="background-color: {% if user.december %}#d4edda{% else %}#f8d7da{% endif %};">
+                {{ user.december|default:"X" }}
+            </td>
+            
+            <td><a href="{% url 'user_edit' user.id %}">Edit</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="15">No results found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>

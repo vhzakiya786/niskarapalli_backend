@@ -1,7 +1,7 @@
 
 from rest_framework import routers
 
-from home_app.views import TestViewset, UserViewset, logout_view, user_login, user_create, user_edit, user_search
+from home_app.views import TestViewset, UserViewset, logout_view, user_autocomplete, user_login, user_create, user_edit, user_search
 from . import views
 
 from . import views
@@ -19,6 +19,7 @@ urlpatterns = [
     path('edit/<int:user_id>/', user_edit, name='user_edit'),
     path('login', user_login, name='login'),
     path('logout', logout_view, name='logout'),
+    path('user-autocomplete/', user_autocomplete, name='user_autocomplete'),
 ]
 
 urlpatterns=urlpatterns+router.urls
