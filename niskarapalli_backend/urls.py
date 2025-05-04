@@ -22,7 +22,7 @@ from home_app import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('home_app.urls')),
-    path('login/',Login.as_view(),name='login'),
+    path('api/login/',Login.as_view(),name='login_api'),
 
     path('home', views.user_create_update, name='user_create_update'),
     path('get_users/', views.get_users, name='get_users'),

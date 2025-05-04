@@ -12,6 +12,12 @@ from .models import UserModel
 from .forms import UserModelForm
 from django.db.models import Q
 from rest_framework.decorators import action
+
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import check_password
+from django.contrib.auth import login,authenticate,logout
+from django.contrib.auth.decorators import login_required
+
 class UserViewset(viewsets.ModelViewSet):
     
     queryset=UserModel.objects.all()
@@ -78,6 +84,7 @@ class TestViewset(viewsets.ModelViewSet):
         }
         return render(request, 'user_edit.html', context)
 
+@login_required(login_url="login")
 def user_search(request):
     query = request.GET.get('q', '')
     if query:
@@ -221,3 +228,29 @@ def check_user_by_upi(request):
             }
         })
     return JsonResponse({'user': None})
+
+
+def user_login(request):
+    if request.method=='POST':
+        data=request.POST
+        username=data.get("username")
+        password=data.get("password")
+        if not username or not password:
+            pass
+        else:
+            user=authenticate(request,username=username,password=password)
+            if user:
+                login(request,user)
+                return redirect('user_create')
+
+
+    if request.user.is_authenticated:
+        return redirect('user_create')
+
+
+    return render(request,"login.html",{})
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
