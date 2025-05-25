@@ -18,6 +18,7 @@ class BaseModel(models.Model):
 
 class Member(BaseModel):
     name = models.CharField(max_length=100)
+    family_name = models.CharField(max_length=100)
     phone_number = models.CharField(
         max_length=15,
         unique=True,
