@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View
 from django.urls import reverse_lazy
 from django.http import JsonResponse
 from .models import Member, Donation, Subscription, Expense, ImamSalary
@@ -69,9 +69,21 @@ class ReportView(TemplateView):
         end_date = self.request.GET.get('end_date')
         
         if period == 'custom' and start_date and end_date:
-            donations = Donation.objects.filter(donation_date__range=[start_date, end_date])
-            expenses = Expense.objects.filter(expense_date__range=[start_date, end_date])
-            salaries = ImamSalary.objects.filter(payment_date__range=[start_date, end_date])
+            try:
+                start = datetime.strptime(start_date, '%Y-%m-%d')
+                end = datetime.strptime(end_date, '%Y-%m-%d')
+                if start > end:
+                    raise ValueError("Start date must be before end date.")
+                donations = Donation.objects.filter(donation_date__range=[start, end])
+                subscriptions = Subscription.objects.filter(subscription_date__range=[start, end])
+                expenses = Expense.objects.filter(expense_date__range=[start, end])
+                salaries = ImamSalary.objects.filter(payment_date__range=[start, end])
+            except (ValueError, TypeError) as e:
+                context['error'] = str(e)
+                donations = Donation.objects.none()
+                subscriptions = Subscription.objects.none()
+                expenses = Expense.objects.none()
+                salaries = ImamSalary.objects.none()
         else:
             end = datetime.now()
             if period == 'monthly':
@@ -81,35 +93,112 @@ class ReportView(TemplateView):
             else:  # yearly
                 start = end.replace(month=1, day=1)
             donations = Donation.objects.filter(donation_date__range=[start, end])
+            subscriptions = Subscription.objects.filter(subscription_date__range=[start, end])
             expenses = Expense.objects.filter(expense_date__range=[start, end])
             salaries = ImamSalary.objects.filter(payment_date__range=[start, end])
         
         total_donations = donations.aggregate(Sum('amount'))['amount__sum'] or 0
+        total_subscriptions = subscriptions.aggregate(Sum('amount'))['amount__sum'] or 0
         total_expenses = expenses.aggregate(Sum('amount'))['amount__sum'] or 0
         total_salaries = salaries.aggregate(Sum('amount'))['amount__sum'] or 0
         
-        # Calculate net balance: Donations (incoming) - Expenses (outgoing) - Salaries (outgoing)
-        net_balance = total_donations - total_expenses - total_salaries
+        total_income = total_donations + total_subscriptions
+        total_expenses_all = total_expenses + total_salaries
+        net_balance = total_income - total_expenses_all
         
         context['total_donations'] = total_donations
+        context['total_subscriptions'] = total_subscriptions
+        context['total_income'] = total_income
         context['total_expenses'] = total_expenses
         context['total_salaries'] = total_salaries
+        context['total_expenses_all'] = total_expenses_all
         context['net_balance'] = net_balance
         context['period'] = period
         return context
 
+# ... (other imports and views remain unchanged)
+
+@method_decorator(login_required, name='dispatch')
+class MemberView(View):
+    template_name = 'members.html'
+    paginate_by = 10
+
+    def get(self, request, *args, **kwargs):
+        members = Member.objects.all().order_by('name')
+        page = request.GET.get('page', 1)
+        from django.core.paginator import Paginator
+        paginator = Paginator(members, self.paginate_by)
+        members_page = paginator.get_page(page)
+
+        member_id = request.GET.get('member_id')
+        if member_id:
+            member = Member.objects.filter(id=member_id).first()
+            if member:
+                form = MemberForm(instance=member, initial={
+                    'name': member.name,
+                    'phone_number': member.phone_number,
+                    'email': member.email
+                })
+            else:
+                form = MemberForm()
+        else:
+            member = Member.objects.none()
+            form = MemberForm()
+
+        context = {
+            'members': members_page,
+            'form': form,
+            'selected_member_id': member_id,
+            'selected_member_name': member.name if member else '',
+            'selected_member_phone': member.phone_number if member else '',
+            'selected_member_email': member.email if member else ''
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        member_id = request.POST.get('member_id')
+        if member_id:
+            member = Member.objects.filter(id=member_id).first()
+            if not member:
+                return redirect('members')
+            form = MemberForm(request.POST, instance=member)
+        else:
+            form = MemberForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('members')
+        
+        members = Member.objects.all().order_by('name')
+        page = request.GET.get('page', 1)
+        from django.core.paginator import Paginator
+        paginator = Paginator(members, self.paginate_by)
+        members_page = paginator.get_page(page)
+
+        context = {
+            'members': members_page,
+            'form': form,
+            'selected_member_id': member_id,
+        }
+        return render(request, self.template_name, context)
+
 def search_members(request):
     query = request.GET.get('q', '')
-    members = Member.objects.filter(name__icontains=query)[:10]
-    results = [{'id': m.id, 'name': m.name, 'phone': m.phone_number} for m in members]
+    members = Member.objects.filter(
+        Q(name__icontains=query) | Q(phone_number__icontains=query)
+    )[:10]
+    results = [
+        {
+            'id': m.id,
+            'name': m.name,
+            'phone': m.phone_number,
+            'email': m.email,
+            'text': f"{m.name} ({m.phone_number})"
+        } for m in members
+    ]
     return JsonResponse({'results': results})
 
-class MemberCreateView(CreateView):
-    model = Member
-    form_class = MemberForm
-    template_name = 'members.html'
-    success_url = reverse_lazy('dashboard')
-
+# ... (other views remain unchanged)
 class DonationCreateView(CreateView):
     model = Donation
     form_class = DonationForm

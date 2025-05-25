@@ -3,14 +3,15 @@ from rest_framework import routers
 
 from django.urls import path
 from .views import (
-    DashboardView, ReportView, MemberCreateView, DonationCreateView,
+    DashboardView, MemberView, ReportView, DonationCreateView,
     SubscriptionCreateView, ExpenseCreateView, ImamSalaryCreateView, search_members
 )
 
 urlpatterns = [
     path('', DashboardView.as_view(), name='dashboard'),
     path('reports/', ReportView.as_view(), name='reports'),
-    path('members/', MemberCreateView.as_view(), name='members'),
+    path('members/', MemberView.as_view(), name='members'),
+    # path('members/', MemberCreateView.as_view(), name='members'),
     path('donations/', DonationCreateView.as_view(), name='donations'),
     path('subscriptions/', SubscriptionCreateView.as_view(), name='subscriptions'),
     path('expenses/', ExpenseCreateView.as_view(), name='expenses'),
