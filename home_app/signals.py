@@ -3,15 +3,15 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from home_app.helpers import fn_update_google_sheet
-from home_app.models import UserModel
+from home_app.models import Member
 
 
-@receiver(post_save, sender=UserModel)
+@receiver(post_save, sender=Member)
 def update_google_sheet(sender, instance, **kwargs):
     pass
     print('signals')
     print(instance.__dict__)
-    fn_update_google_sheet(instance)
+    # fn_update_google_sheet(instance)
     # import pygsheets
     # import pandas as pd
     # #authorization

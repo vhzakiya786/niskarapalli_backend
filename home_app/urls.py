@@ -1,24 +1,21 @@
 
 from rest_framework import routers
 
-from home_app.views import TestViewset, UserViewset, logout_view, user_login, user_create, user_edit, user_search
-from . import views
-
-from . import views
-from home_app.views import TestViewset, UserViewset
 from django.urls import path
-router=routers.SimpleRouter()
+from .views import (
+    DashboardView, MemberView, ReportView, DonationCreateView,
+    SubscriptionCreateView, ExpenseCreateView, ImamSalaryCreateView, search_members
+)
 
-
-
-router.register(r'user',UserViewset,basename='user')
-router.register(r'name',TestViewset,basename='test')
 urlpatterns = [
-    path('create/', user_create, name='user_create'),
-    path('search/', user_search, name='user_search'),
-    path('edit/<int:user_id>/', user_edit, name='user_edit'),
-    path('login', user_login, name='login'),
-    path('logout', logout_view, name='logout'),
+    path('', DashboardView.as_view(), name='dashboard'),
+    path('reports/', ReportView.as_view(), name='reports'),
+    path('members/', MemberView.as_view(), name='members'),
+    # path('members/', MemberCreateView.as_view(), name='members'),
+    path('donations/', DonationCreateView.as_view(), name='donations'),
+    path('subscriptions/', SubscriptionCreateView.as_view(), name='subscriptions'),
+    path('expenses/', ExpenseCreateView.as_view(), name='expenses'),
+    path('imam-salary/', ImamSalaryCreateView.as_view(), name='imam_salary'),
+    path('search-members/', search_members, name='search_members'),
 ]
-
-urlpatterns=urlpatterns+router.urls
+# urlpatterns=urlpatterns+router.urls

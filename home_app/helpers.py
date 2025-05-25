@@ -34,7 +34,7 @@ def fn_update_google_sheet(instance):
         'id': instance.id,
         'name': instance.name,
         'mobile': instance.mobile,
-        'offer': instance.offer,
+        'is_offer': instance.offer,
         'offer_description': instance.offer_description,
         'year': instance.year,
         'upi_id1': instance.upi_id1,

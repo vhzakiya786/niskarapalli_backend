@@ -1,67 +1,60 @@
 from django import forms
-from .models import UserModel
+from .models import Member, Donation, Subscription, ImamSalary, Expense
+from django.core.validators import RegexValidator
 
-class UserModelForm(forms.ModelForm):
+class MemberForm(forms.ModelForm):
     class Meta:
-        model = UserModel
-        fields = ['name', 'mobile', 'offer', 'offer_description', 'year',
-                  'upi_id1', 'upi_id2', 'upi_id3', 'upi_id4',
-                  'jan', 'feb', 'march', 'april', 'may', 'june',
-                  'july', 'august', 'september', 'october', 'november', 'december']
+        model = Member
+        fields = ['name', 'phone_number', 'email']
         widgets = {
-            'jan': forms.TextInput(attrs={'class': 'form-control'}),
-            'feb': forms.TextInput(attrs={'class': 'form-control'}),
-            'march': forms.TextInput(attrs={'class': 'form-control'}),
-            'april': forms.TextInput(attrs={'class': 'form-control'}),
-            'may': forms.TextInput(attrs={'class': 'form-control'}),
-            'june': forms.TextInput(attrs={'class': 'form-control'}),
-            'july': forms.TextInput(attrs={'class': 'form-control'}),
-            'august': forms.TextInput(attrs={'class': 'form-control'}),
-            'september': forms.TextInput(attrs={'class': 'form-control'}),
-            'october': forms.TextInput(attrs={'class': 'form-control'}),
-            'november': forms.TextInput(attrs={'class': 'form-control'}),
-            'december': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'placeholder': '+1234567890'}),
+            'email': forms.EmailInput(attrs={'placeholder': 'example@email.com'}),
         }
-class UserForm(forms.ModelForm):
+
+class DonationForm(forms.ModelForm):
     class Meta:
-        model = UserModel
-        fields = [
-            'name', 'mobile', 'offer', 'offer_description', 'year',
-            'upi_id1', 'upi_id2', 'upi_id3', 'upi_id4',
-            'jan', 'feb', 'march', 'april', 'may', 'june',
-            'july', 'august', 'september', 'october', 'november', 'december'
-        ]
+        model = Donation
+        fields = ['member', 'amount', 'payment_method', 'transaction_id', 'upi_id', 'donation_date', 'is_anonymous', 'purpose']
         widgets = {
-            'offer': forms.CheckboxInput(),
-            'jan': forms.NumberInput(attrs={'step': '0.01'}),
-            'feb': forms.NumberInput(attrs={'step': '0.01'}),
-            'march': forms.NumberInput(attrs={'step': '0.01'}),
-            'april': forms.NumberInput(attrs={'step': '0.01'}),
-            'may': forms.NumberInput(attrs={'step': '0.01'}),
-            'june': forms.NumberInput(attrs={'step': '0.01'}),
-            'july': forms.NumberInput(attrs={'step': '0.01'}),
-            'august': forms.NumberInput(attrs={'step': '0.01'}),
-            'september': forms.NumberInput(attrs={'step': '0.01'}),
-            'october': forms.NumberInput(attrs={'step': '0.01'}),
-            'november': forms.NumberInput(attrs={'step': '0.01'}),
-            'december': forms.NumberInput(attrs={'step': '0.01'}),
+            'donation_date': forms.DateInput(attrs={'type': 'date'}),
+            'member': forms.Select(attrs={'class': 'autocomplete'}),
+            'transaction_id': forms.TextInput(attrs={'placeholder': 'Transaction ID (optional)'}),
+            'upi_id': forms.TextInput(attrs={'placeholder': 'UPI ID (optional)'}),
         }
 
     def clean(self):
         cleaned_data = super().clean()
-        name = cleaned_data.get('name')
-        mobile = cleaned_data.get('mobile')
-        upi_id1 = cleaned_data.get('upi_id1')
-        upi_id2 = cleaned_data.get('upi_id2')
-
-        # If upi_id1 exists, check if it matches an existing user
-        if upi_id1:
-            existing_user = UserModel.objects.filter(upi_id1=upi_id1).first()
-            if existing_user and upi_id2:
-                # If upi_id1 matches, new UPI ID should go to upi_id2
-                cleaned_data['upi_id2'] = upi_id2
-                cleaned_data['upi_id1'] = existing_user.upi_id1
-                cleaned_data['name'] = existing_user.name
-                cleaned_data['mobile'] = existing_user.mobile
-
+        if cleaned_data.get('is_anonymous') and cleaned_data.get('member'):
+            raise forms.ValidationError("Anonymous donations cannot have a member associated.")
         return cleaned_data
+
+class SubscriptionForm(forms.ModelForm):
+    class Meta:
+        model = Subscription
+        fields = ['member', 'amount', 'payment_method', 'transaction_id', 'upi_id', 'subscription_date']
+        widgets = {
+            'subscription_date': forms.DateInput(attrs={'type': 'date'}),
+            'member': forms.Select(attrs={'class': 'autocomplete'}),
+            'transaction_id': forms.TextInput(attrs={'placeholder': 'Transaction ID (optional)'}),
+            'upi_id': forms.TextInput(attrs={'placeholder': 'UPI ID (optional)'}),
+        }
+
+class ImamSalaryForm(forms.ModelForm):
+    class Meta:
+        model = ImamSalary
+        fields = ['amount', 'payment_date', 'payment_method', 'transaction_id', 'upi_id', 'notes']
+        widgets = {
+            'payment_date': forms.DateInput(attrs={'type': 'date'}),
+            'transaction_id': forms.TextInput(attrs={'placeholder': 'Transaction ID (optional)'}),
+            'upi_id': forms.TextInput(attrs={'placeholder': 'UPI ID (optional)'}),
+        }
+
+class ExpenseForm(forms.ModelForm):
+    class Meta:
+        model = Expense
+        fields = ['amount', 'purpose', 'expense_date', 'payment_method', 'transaction_id', 'upi_id', 'notes']
+        widgets = {
+            'expense_date': forms.DateInput(attrs={'type': 'date'}),
+            'transaction_id': forms.TextInput(attrs={'placeholder': 'Transaction ID (optional)'}),
+            'upi_id': forms.TextInput(attrs={'placeholder': 'UPI ID (optional)'}),
+        }

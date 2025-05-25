@@ -15,79 +15,128 @@
         th {
             background-color: #f2f2f2;
         }
+        #autocomplete-results div:hover {
+    background-color: #f2f2f2;
+}
+
     </style>
 </head>
 <body>
     <h1>User Search</h1>
     <form method="GET" action="{% url 'user_search' %}">
         <input type="text" name="q" value="{{ query }}" placeholder="Search by name or mobile">
+        <select name="year">
+            {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                    {{ y }}
+                </option>
+            {% endfor %}
+        </select>
         <button type="submit">Search</button>
     </form>
     
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Mobile</th>
-                <th>January</th>
-                <th>February</th>
-                <th>March</th>
-                <th>April</th>
-                <th>May</th>
-                <th>June</th>
-                <th>July</th>
-                <th>August</th>
-                <th>September</th>
-                <th>October</th>
-                <th>November</th>
-                <th>December</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
-            <tr>
-                <td>{{ user.name }}</td>
-                <td>{{ user.mobile }}</td>
-                <td>{{ user.jan }}</td>
-                <td>{{ user.feb }}</td>
-                <td>{{ user.march }}</td>
-                <td>{{ user.april }}</td>
-                <td>{{ user.may }}</td>
-                <td>{{ user.june }}</td>
-                <td>{{ user.july }}</td>
-                <td>{{ user.august }}</td>
-                <td>{{ user.september }}</td>
-                <td>{{ user.october }}</td>
-                <td>{{ user.november }}</td>
-                <td>{{ user.december }}</td>
-                <td>
-                    <a href="{% url 'user_edit' user.id %}">Edit</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="15">No results found</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div id="user-table">
+        {% include 'partials/user_table.html' %}
+    </div>
+    
 
     <h2>Create New User</h2>
-    <form method="POST" action="{% url 'user_create' %}">
-        {% csrf_token %}
-        <label for="name">Name:</label>
-        <input type="text" name="name" id="name" required>
+    <h2>Create New User</h2>
+<form method="POST" action="{% url 'user_create' %}">
+    {% csrf_token %}
+    <label for="name">Name:</label>
+    <input type="text" name="name" id="name" required autocomplete="off">
 
-        <label for="mobile">Mobile:</label>
-        <input type="text" name="mobile" id="mobile" required>
+    <div id="autocomplete-results" style="border: 1px solid #ccc; max-height: 150px; overflow-y: auto; display: none; position: absolute; background: white; z-index: 1000;"></div>
 
-        <!-- Optionally, you can add fields for other default values -->
-        <!-- For example, you might set default values for monthly fields -->
-        
-        <button type="submit">Create</button>
-    </form>
+    <label for="mobile">Mobile:</label>
+    <input type="text" name="mobile" id="mobile" required>
+    <select name="year">
+        {% for y in years %}
+            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                {{ y }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Create</button>
+</form>
+
+    
 
     <a href="{% url 'user_search' %}">Back to Search</a>
+
+    <script>
+        const searchInput = document.querySelector('input[name="q"]');
+        const yearSelect = document.querySelector('select[name="year"]');
+    
+        function fetchResults() {
+            const query = searchInput.value;
+            const year = yearSelect.value;
+    
+            fetch(`{% url 'user_search' %}?q=${encodeURIComponent(query)}&year=${year}`, {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("user-table").innerHTML = data.html;
+            });
+        }
+    
+        searchInput.addEventListener('input', fetchResults);
+        yearSelect.addEventListener('change', fetchResults);
+    </script>
+    <script>
+        const nameInput = document.getElementById('name');
+        const mobileInput = document.getElementById('mobile');
+        const resultsBox = document.getElementById('autocomplete-results');
+    
+        nameInput.addEventListener('input', function () {
+            const query = this.value.trim();
+            if (!query) {
+                resultsBox.style.display = 'none';
+                return;
+            }
+    
+            fetch(`{% url 'user_autocomplete' %}?q=${encodeURIComponent(query)}`, {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const results = data.results;
+                resultsBox.innerHTML = '';
+                if (results.length > 0) {
+                    resultsBox.style.display = 'block';
+                    results.forEach(item => {
+                        const option = document.createElement('div');
+                        option.textContent = item.name;
+                        option.style.padding = '4px';
+                        option.style.cursor = 'pointer';
+                        option.addEventListener('click', () => {
+                            nameInput.value = item.name;
+                            mobileInput.value = item.mobile;
+                            resultsBox.style.display = 'none';
+                        });
+                        resultsBox.appendChild(option);
+                    });
+                } else {
+                    resultsBox.style.display = 'none';
+                }
+            });
+        });
+    
+        // Hide on outside click
+        document.addEventListener('click', function (e) {
+            if (!resultsBox.contains(e.target) && e.target !== nameInput) {
+                resultsBox.style.display = 'none';
+            }
+        });
+    </script>
+    
+    
 </body>
 </html>

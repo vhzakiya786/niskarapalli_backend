@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">Manage Members</h1>
+
+    <!-- Search Input for Filtering Members List -->
+    <div class="mb-4">
+        <input type="text" id="member-search" class="border p-2 rounded w-full" placeholder="Search by name or phone number">
+    </div>
+
+    <!-- Member List with Pagination -->
+    <div class="overflow-x-auto mb-8">
+        <table class="min-w-full bg-white border" id="member-table">
+            <thead>
+                <tr>
+                    <th class="py-2 px-4 border">Name</th>
+                    <th class="py-2 px-4 border">Phone Number</th>
+                    <th class="py-2 px-4 border">Email</th>
+                    <th class="py-2 px-4 border">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr class="member-row" data-name="{{ member.name|lower }}" data-phone="{{ member.phone_number|lower }}">
+                    <td class="py-2 px-4 border">{{ member.name }}</td>
+                    <td class="py-2 px-4 border">{{ member.phone_number }}</td>
+                    <td class="py-2 px-4 border">{{ member.email|default:"N/A" }}</td>
+                    <td class="py-2 px-4 border">
+                        <a href="?member_id={{ member.id }}" class="text-blue-500 hover:underline">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="py-2 px-4 border text-center">No members found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if members.has_other_pages %}
+    <div class="flex justify-center mt-4">
+        <nav aria-label="Page navigation">
+            <ul class="inline-flex space-x-2">
+                {% if members.has_previous %}
+                <li>
+                    <a href="?page={{ members.previous_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Previous</a>
+                </li>
+                {% endif %}
+                {% for num in members.paginator.page_range %}
+                <li>
+                    <a href="?page={{ num }}" class="px-3 py-1 {% if members.number == num %}bg-blue-500 text-white{% else %}bg-gray-200 hover:bg-gray-300{% endif %} rounded">{{ num }}</a>
+                </li>
+                {% endfor %}
+                {% if members.has_next %}
+                <li>
+                    <a href="?page={{ members.next_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+
+    <!-- Member Form with Autocomplete -->
+    <h2 class="text-2xl font-bold mt-8 mb-4">Add/Edit Member</h2>
+    <form method="POST" class="space-y-4" id="member-form">
+        {% csrf_token %}
+        {% if form.errors %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline">Please correct the following errors:</span>
+                <ul class="list-disc list-inside">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li>{{ field }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <div class="flex flex-wrap -mx-2">
+            <div class="w-full md:w-1/2 px-2 mb-4">
+                <label for="id_name" class="block text-sm font-medium text-gray-700">Name</label>
+                <select id="id_name" name="name" class="border p-2 rounded w-full autocomplete-name"></select>
+                <input type="hidden" id="id_member_id" name="member_id" value="{{ selected_member_id|default_if_none:'' }}">
+            </div>
+            <div class="w-full md:w-1/2 px-2 mb-4">
+                <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                <select id="id_phone_number" name="phone_number" class="border p-2 rounded w-full autocomplete-phone"></select>
+            </div>
+            <div class="w-full md:w-1/2 px-2 mb-4">
+                <label for="id_email" class="block text-sm font-medium text-gray-700">Email</label>
+                {{ form.email }}
+            </div>
+        </div>
+        <div class="flex space-x-4">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+            <a href="{% url 'dashboard' %}" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for name autocomplete
+        $('.autocomplete-name').select2({
+            ajax: {
+                url: "{% url 'search_members' %}",
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.results.map(function(member) {
+                            return {
+                                id: member.id,
+                                text: member.text,
+                                phone: member.phone,
+                                email: member.email
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            placeholder: 'Enter member name',
+            minimumInputLength: 1,
+            allowClear: true,
+            tags: true
+        });
+
+        // Initialize Select2 for phone number autocomplete
+        $('.autocomplete-phone').select2({
+            ajax: {
+                url: "{% url 'search_members' %}",
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.results.map(function(member) {
+                            return {
+                                id: member.id,
+                                text: member.phone,
+                                name: member.name,
+                                email: member.email
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            placeholder: 'Enter phone number',
+            minimumInputLength: 1,
+            allowClear: true,
+            tags: true
+        });
+
+        // Pre-fill form if editing
+        {% if selected_member_id %}
+            var memberId = "{{ selected_member_id }}";
+            var nameOption = new Option("{{ selected_member_name }} ({{ selected_member_phone }})", memberId, true, true);
+            var phoneOption = new Option("{{ selected_member_phone }}", memberId, true, true);
+            $('#id_name').append(nameOption).trigger('change');
+            $('#id_phone_number').append(phoneOption).trigger('change');
+            $('#id_email').val("{{ selected_member_email|default_if_none:'' }}");
+        {% endif %}
+
+        // Handle name selection
+        $('#id_name').on('select2:select', function(e) {
+            var data = e.params.data;
+            // Check if a different member was selected (not a new name)
+            if (data.id !== data.text) {
+                $.ajax({
+                    url: "{% url 'search_members' %}",
+                    data: { q: data.text.split(' (')[0] },
+                    dataType: 'json',
+                    success: function(response) {
+                        var member = response.results.find(m => m.id == data.id);
+                        if (member) {
+                            $('#id_member_id').val(member.id);
+                            // Only update phone and email if a different member is selected
+                            var phoneOption = new Option(member.phone, member.id, true, true);
+                            $('#id_phone_number').empty().append(phoneOption).trigger('change');
+                            $('#id_email').val(member.email || '');
+                        }
+                    }
+                });
+            }
+            // If a new name is entered (data.id === data.text), do not reset other fields
+        });
+
+        // Handle phone number selection
+        $('#id_phone_number').on('select2:select', function(e) {
+            var data = e.params.data;
+            // Check if a different member was selected (not a new phone number)
+            if (data.id !== data.text) {
+                $.ajax({
+                    url: "{% url 'search_members' %}",
+                    data: { q: data.text },
+                    dataType: 'json',
+                    success: function(response) {
+                        var member = response.results.find(m => m.id == data.id);
+                        if (member) {
+                            $('#id_member_id').val(member.id);
+                            // Only update name and email if a different member is selected
+                            var nameOption = new Option(member.text, member.id, true, true);
+                            $('#id_name').empty().append(nameOption).trigger('change');
+                            $('#id_email').val(member.email || '');
+                        }
+                    }
+                });
+            }
+            // If a new phone number is entered (data.id === data.text), do not reset other fields
+        });
+
+        // Clear form fields when the user clears the name selection
+        $('#id_name').on('select2:clear', function(e) {
+            $('#id_member_id').val('');
+            $('#id_phone_number').val('').trigger('change');
+            $('#id_email').val('');
+        });
+
+        // Clear form fields when the user clears the phone number selection
+        $('#id_phone_number').on('select2:clear', function(e) {
+            $('#id_member_id').val('');
+            $('#id_name').val('').trigger('change');
+            $('#id_email').val('');
+        });
+
+        // Dynamic filtering of the members list
+        $('#member-search').on('input', function() {
+            var query = $(this).val().toLowerCase();
+            $('#member-table tbody tr.member-row').each(function() {
+                var name = $(this).data('name');
+                var phone = $(this).data('phone');
+                if (name.includes(query) || phone.includes(query)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
