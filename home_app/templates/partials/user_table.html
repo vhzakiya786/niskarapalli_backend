@@ -3,6 +3,7 @@
         <tr>
             <th>Name</th>
             <th>Mobile</th>
+            <th>Year</th>
             <th>January</th>
             <th>February</th>
             <th>March</th>
@@ -23,6 +24,7 @@
         <tr>
             <td>{{ user.name }}</td>
             <td>{{ user.mobile }}</td>
+            <td>{{ user.year }}</td>
             <td style="background-color: {% if user.jan %}#d4edda{% else %}#f8d7da{% endif %};">
                 {{ user.jan|default:"X" }}
             </td>

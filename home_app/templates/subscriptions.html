@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">Manage Subscriptions</h1>
+
+    <!-- Subscription Form -->
+    <form method="POST" class="space-y-4">
+        {% csrf_token %}
+        <div class="flex flex-wrap -mx-2">
+            <div class="w-full md:w-1/2 px-2 mb-4">
+                <label for="id_member" class="block text-sm font-medium text-gray-700">Member</label>
+                {{ form.member }}
+            </div>
+            <div class="w-full md:w-1/2 px-2 mb-4">
+                <label for="id_amount" class="block text-sm font-medium text-gray-700">Amount</label>
+                {{ form.amount }}
+            </div>
+            <div class="w-full md:w-1/2 px-2 mb-4">
+                <label for="id_payment_method" class="block text-sm font-medium text-gray-700">Payment Method</label>
+                {{ form.payment_method }}
+            </div>
+            <div class="w-full md:w-1/2 px-2 mb-4">
+                <label for="id_transaction_id" class="block text-sm font-medium text-gray-700">Transaction ID</label>
+                {{ form.transaction_id }}
+            </div>
+            <div class="w-full md:w-1/2 px-2 mb-4">
+                <label for="id_upi_id" class="block text-sm font-medium text-gray-700">UPI ID</label>
+                {{ form.upi_id }}
+            </div>
+            <div class="w-full md:w-1/2 px-2 mb-4">
+                <label for="id_subscription_date" class="block text-sm font-medium text-gray-700">Subscription Date</label>
+                {{ form.subscription_date }}
+            </div>
+        </div>
+        <div class="flex space-x-4">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+            <a href="{% url 'dashboard' %}" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

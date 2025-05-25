@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+   {% block content %}
+   <div class="container mx-auto p-6">
+       <h1 class="text-3xl font-bold mb-6">User Search</h1>
+
+       <!-- Search and Year Filter -->
+       <div class="flex justify-between mb-4">
+           <form method="GET" class="flex space-x-4">
+               <input type="text" name="search" placeholder="Search by name or mobile" value="{{ search_query }}" class="border p-2 rounded w-64">
+               <select name="year" onchange="this.form.submit()" class="border p-2 rounded">
+                   {% for y in years %}
+                   <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                   {% endfor %}
+               </select>
+               <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Search</button>
+           </form>
+       </div>
+
+       <!-- Table -->
+       <div class="overflow-x-auto">
+           <table class="min-w-full bg-white border">
+               <thead>
+                   <tr>
+                       <th class="py-2 px-4 border">Name</th>
+                       <th class="py-2 px-4 border">Mobile</th>
+                       <th class="py-2 px-4 border">Year</th>
+                       {% for month_name, _ in subscription_data.0.months %}
+                       <th class="py-2 px-4 border">{{ month_name }}</th>
+                       {% endfor %}
+                       <th class="py-2 px-4 border">Actions</th>
+                   </tr>
+               </thead>
+               <tbody>
+                   {% for data in subscription_data %}
+                   <tr>
+                       <td class="py-2 px-4 border">{{ data.member.name }}</td>
+                       <td class="py-2 px-4 border">{{ data.member.phone_number }}</td>
+                       <td class="py-2 px-4 border">{{ year }}</td>
+                       {% for _, amount in data.months %}
+                       <td class="py-2 px-4 border {% if amount == 'X' %}bg-red-100{% else %}bg-green-100{% endif %}">
+                           {{ amount }}
+                       </td>
+                       {% endfor %}
+                       <td class="py-2 px-4 border">
+                           <a href="{% url 'subscriptions' %}?member={{ data.member.id }}" class="text-blue-500">Edit</a>
+                       </td>
+                   </tr>
+                   {% endfor %}
+               </tbody>
+           </table>
+       </div>
+
+       <!-- Create New User -->
+       <h2 class="text-2xl font-bold mt-8 mb-4">Create New User</h2>
+       <form method="POST" class="flex space-x-4 mb-4">
+           {% csrf_token %}
+           <div>
+               <label for="id_name">Name:</label>
+               {{ member_form.name }}
+           </div>
+           <div>
+               <label for="id_phone_number">Mobile:</label>
+               {{ member_form.phone_number }}
+           </div>
+           <div>
+               <label for="id_email">Email:</label>
+               {{ member_form.email }}
+           </div>
+           <div>
+               <label for="year">Year:</label>
+               <select name="year" class="border p-2 rounded">
+                   {% for y in years %}
+                   <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                   {% endfor %}
+               </select>
+           </div>
+           <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Create</button>
+       </form>
+       <a href="{% url 'dashboard' %}" class="text-blue-500">Back to Search</a>
+   </div>
+   {% endblock %}

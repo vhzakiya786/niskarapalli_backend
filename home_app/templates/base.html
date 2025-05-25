@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosque Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar" class="bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
+            <button id="toggleSidebar" class="md:hidden p-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+            </button>
+            <nav>
+                <a href="{% url 'dashboard' %}" class="block py-2.5 px-4 rounded hover:bg-gray-700">Dashboard</a>
+                <a href="{% url 'members' %}" class="block py-2.5 px-4 rounded hover:bg-gray-700">Members</a>
+                <a href="{% url 'donations' %}" class="block py-2.5 px-4 rounded hover:bg-gray-700">Donations</a>
+                <a href="{% url 'subscriptions' %}" class="block py-2.5 px-4 rounded hover:bg-gray-700">Subscriptions</a>
+                <a href="{% url 'expenses' %}" class="block py-2.5 px-4 rounded hover:bg-gray-700">Expenses</a>
+                <a href="{% url 'imam_salary' %}" class="block py-2.5 px-4 rounded hover:bg-gray-700">Imam Salary</a>
+                <a href="{% url 'reports' %}" class="block py-2.5 px-4 rounded hover:bg-gray-700">Reports</a>
+            </nav>
+        </div>
+        <!-- Main Content -->
+        <div class="flex-1 p-10">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+    <script src="{% static 'js/scripts.js' %}"></script>
+</body>
+</html>

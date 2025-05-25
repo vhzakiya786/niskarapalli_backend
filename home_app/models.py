@@ -1,90 +1,132 @@
 from django.db import models
-
-# Create your models here.
 from django.utils import timezone
+from django.core.validators import RegexValidator
+from django.contrib.auth.models import User
 
-
-from home_app.helpers import fn_update_google_sheet
-
+# Custom field to auto-update datetime on save
 class AutoDateTimeField(models.DateTimeField):
-	def pre_save(self, model_instance, add):
-		return timezone.now()
+    def pre_save(self, model_instance, add):
+        return timezone.now()
+
+# Abstract base model for common fields
 class BaseModel(models.Model):
-	created_at = models.DateTimeField(default=timezone.now)
-	updated_at = AutoDateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = AutoDateTimeField(default=timezone.now)
 
-	class Meta:
-		abstract = True
-		
+    class Meta:
+        abstract = True
 
-class UserModel(BaseModel):
-	name = models.CharField(max_length=255,blank=True, null=True)
-	mobile = models.CharField(max_length=20,blank=True, null=True)
-	offer = models.BooleanField(default=False)
-	offer_description=models.CharField(max_length=255,blank=True, null=True)
-	year = models.CharField(max_length=10,blank=True, null=True)
-	upi_id1 = models.CharField(max_length=255, blank=True, null=True)
-	upi_id2 = models.CharField(max_length=255, blank=True, null=True)
-	upi_id3 = models.CharField(max_length=255, blank=True, null=True)
-	upi_id4 = models.CharField(max_length=255, blank=True, null=True)
-	jan = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	feb = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	march = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	april = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	may = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	june = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	july = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	august = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	september = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	october = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	november = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	december = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+class Member(BaseModel):
+    name = models.CharField(max_length=100)
+    phone_number = models.CharField(
+        max_length=15,
+        unique=True,
+        validators=[RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Phone number must be valid.")]
+    )
+    email = models.EmailField(
+        max_length=255,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Optional email address of the member."
+    )
 
-	class Meta:
-		db_table ="users_model"
+    def __str__(self):
+        return self.name
 
-	def __str__(self):
-		return self.name
+    class Meta:
+        db_table = "members"
+        ordering = ['name']
 
+class Donation(BaseModel):
+    PAYMENT_METHODS = (
+        ('CASH', 'Cash'),
+        ('GOOGLE_PAY', 'Google Pay'),
+        ('BANK_TRANSFER', 'Bank Transfer'),
+    )
+    member = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True, blank=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+    transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    upi_id = models.CharField(max_length=100, null=True, blank=True)
+    donation_date = models.DateField()
+    is_anonymous = models.BooleanField(default=False)
+    purpose = models.CharField(max_length=100, null=True, blank=True)
 
-class ExpenseModel(BaseModel):
-	name=models.CharField(max_length=255)
-	amount=models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    class Meta:
+        db_table = "donations"
 
-	class Meta:
-		db_table ="expenses_model"
+    def __str__(self):
+        return f"{'Anonymous' if self.is_anonymous else self.member.name if self.member else 'Unknown'} - {self.amount}"
 
-	def __str__(self):
-		return self.name
-	
-class ReportModel(BaseModel):
-	month=models.CharField(max_length=25)
-	expense=models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-	balance=models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+class Subscription(BaseModel):
+    PAYMENT_METHODS = (
+        ('CASH', 'Cash'),
+        ('GOOGLE_PAY', 'Google Pay'),
+        ('BANK_TRANSFER', 'Bank Transfer'),
+    )
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+    transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    upi_id = models.CharField(max_length=100, null=True, blank=True)
+    subscription_date = models.DateField()
 
-	class Meta:
-		db_table ="reports_model"
+    class Meta:
+        db_table = "subscription"
 
-	def __str__(self):
-		return self.month
+    def __str__(self):
+        return f"{self.member.name} - {self.amount} ({self.subscription_date})"
 
+class ImamSalary(BaseModel):
+    PAYMENT_METHODS = (
+        ('CASH', 'Cash'),
+        ('GOOGLE_PAY', 'Google Pay'),
+        ('BANK_TRANSFER', 'Bank Transfer'),
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateField()
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+    transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    upi_id = models.CharField(max_length=100, null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
 
-from django.core.validators import MinValueValidator, MaxValueValidator
+    class Meta:
+        db_table = "imam_salary"
 
+    def __str__(self):
+        return f"Imam Salary - {self.amount} ({self.payment_date})"
 
-class YearModel(BaseModel):
-	year = models.PositiveIntegerField(
-		unique=True,
-		validators=[
-			MinValueValidator(2023),
-			MaxValueValidator(2080)
-		]
-	)
-	class Meta:
-		db_table="years"
-	def __str__(self):
-		return self.year
+class Expense(BaseModel):
+    PAYMENT_METHODS = (
+        ('CASH', 'Cash'),
+        ('GOOGLE_PAY', 'Google Pay'),
+        ('BANK_TRANSFER', 'Bank Transfer'),
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    purpose = models.CharField(max_length=100)
+    expense_date = models.DateField()
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+    transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    upi_id = models.CharField(max_length=100, null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
 
+    class Meta:
+        db_table = "expenses"
 
+    def __str__(self):
+        return f"{self.purpose} - {self.amount} ({self.expense_date})"
 
+class AuditLog(BaseModel):
+    action = models.CharField(max_length=100)
+    model_name = models.CharField(max_length=50)
+    object_id = models.PositiveIntegerField()
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    details = models.JSONField(default=dict)
 
+    class Meta:
+        db_table = "audit_logs"
+
+    def __str__(self):
+        return f"{self.action} on {self.model_name} ({self.object_id}) at {self.timestamp}"

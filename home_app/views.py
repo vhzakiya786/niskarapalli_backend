@@ -1,310 +1,135 @@
-from django.shortcuts import render
-
-# Create your views here.
-from rest_framework import viewsets
-
-from home_app.models import UserModel
-from home_app.serializers import UserSerializers
-from rest_framework.response import Response
-from rest_framework_simplejwt.authentication import JWTAuthentication 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import UserModel, YearModel
-from .forms import UserModelForm
-from django.db.models import Q
-from rest_framework.decorators import action
-
-from django.contrib.auth.models import User
-from django.contrib.auth.hashers import check_password
-from django.contrib.auth import login,authenticate,logout
-from django.contrib.auth.decorators import login_required
-from datetime import datetime
-from django.http import JsonResponse
-from django.template.loader import render_to_string
-from django.views.decorators.http import require_GET
-class UserViewset(viewsets.ModelViewSet):
-    
-    queryset=UserModel.objects.all()
-    serializer_class=UserSerializers
-    authentication_classes=[JWTAuthentication]
-
-    def create(self, request, *args, **kwargs):
-        data=request.data
-        name=data.get("name")
-        obj=UserModel.objects.filter(name=name).first()
-        if obj:
-            serializers=UserSerializers(obj,data=data, partial=True)
-            if serializers.is_valid():
-                serializers.save()
-                return Response(serializers.data)
-        return super().create(request, *args, **kwargs)
-
-class TestViewset(viewsets.ModelViewSet):
-    
-    queryset=UserModel.objects.all()
-    serializer_class=UserSerializers
-    authentication_classes=[]
-    permission_classes = []
-
-    http_method_names = ['get',]
-
-    def list(self, request, *args, **kwargs):
-        search=request.GET.get("search")
-
-        if search:
-            self.queryset=self.queryset.filter(name__icontains=search)
-        return super().list(request, *args, **kwargs)
-
-    @action(methods=['post','get'],detail=False)
-    def user_search(self,request,**kwargs):
-        query = request.GET.get('q', '')
-        if query:
-            users = UserModel.objects.filter(
-                Q(name__icontains=query) | Q(mobile__icontains=query)
-            )
-        else:
-            users = UserModel.objects.all()
-
-        context = {
-            'users': users,
-            'query': query,
-        }
-        return render(request, 'user_search.html', context)
-
-    @action(methods=['post','get'],detail=True)
-    def user_edit(self,request, user_id):
-        user = get_object_or_404(UserModel, id=user_id)
-        if request.method == 'POST':
-            form = UserModelForm(request.POST, instance=user)
-            if form.is_valid():
-                form.save()
-                return redirect('user_search')
-        else:
-            form = UserModelForm(instance=user)
-
-        context = {
-            'form': form,
-            'user': user,
-        }
-        return render(request, 'user_edit.html', context)
-
-from django.http import JsonResponse
-from django.template.loader import render_to_string
-
-@login_required(login_url="login")
-def user_search(request):
-    current_year = datetime.now().year
-    selected_year = int(request.GET.get('year', current_year))
-    query = request.GET.get('q', '').strip()
-
-    # Ensure year entries
-    existing_years = set(YearModel.objects.values_list('year', flat=True))
-    for y in range(2023, current_year + 1):
-        if y not in existing_years:
-            YearModel.objects.create(year=y)
-    years = list(YearModel.objects.values_list('year', flat=True).order_by('year'))
-
-    # Filter users
-    users = UserModel.objects.all()
-    if query:
-        users = users.filter(Q(name__icontains=query) | Q(mobile__icontains=query))
-    users = users.filter(year=selected_year)
-
-    context = {
-        'users': users,
-        'query': query,
-        'selected_year': selected_year,
-        'years': years
-    }
-
-    # If AJAX, return partial HTML
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        html = render_to_string('partials/user_table.html', context, request=request)
-        return JsonResponse({'html': html})
-
-    return render(request, 'user_search.html', context)
-
-from django.core.exceptions import ValidationError
-from .models import UserModel
-
-@login_required(login_url="login")
-def user_edit(request, user_id):
-    user = get_object_or_404(UserModel, id=user_id)
-    
-    if request.method == 'POST':
-        selected_month = request.POST.get('month')
-        amount = request.POST.get('amount')
-        
-        if selected_month and amount:
-            try:
-                # Convert amount to a Decimal, ensuring it's valid
-                from decimal import Decimal
-                decimal_amount = Decimal(amount)
-                
-                # Set the value for the selected month
-                setattr(user, selected_month, decimal_amount)
-                user.save()
-                
-                return redirect('user_search')
-            except (ValueError, ValidationError, ArithmeticError) as e:
-                # Handle conversion errors
-                return render(request, 'user_edit.html', {
-                    'user': user,
-                    'selected_month': selected_month,
-                    'error_message': str(e),
-                    'months': ['jan', 'feb', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'],
-                })
-        else:
-            return render(request, 'user_edit.html', {
-                'user': user,
-                'selected_month': selected_month,
-                'error_message': 'Amount cannot be empty.',
-                'months': ['jan', 'feb', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'],
-            })
-    else:
-        selected_month = request.GET.get('month', 'jan')
-
-    context = {
-        'user': user,
-        'selected_month': selected_month,
-        'months': ['jan', 'feb', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'],
-    }
-    return render(request, 'user_edit.html', context)
-
-@login_required(login_url="login")
-def user_create(request):
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        mobile = request.POST.get('mobile')
-        current_year=datetime.now().year
-        selected_year=int(request.GET.get('year', current_year))
-
-        obj=UserModel.objects.filter(name=name,mobile=mobile,year=selected_year).first()
-        if obj:
-            return redirect('user_search')
-
-        
-        # Optionally, set default values for monthly fields if needed
-        UserModel.objects.create(
-            name=name,
-            mobile=mobile,
-            year=selected_year,
-            jan=None,
-            feb=None,
-            march=None,
-            april=None,
-            may=None,
-            june=None,
-            july=None,
-            august=None,
-            september=None,
-            october=None,
-            november=None,
-            december=None
-        )
-        return redirect('user_search')
-    
-    return redirect('user_search')    
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from .models import UserModel
-from .forms import UserForm
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
+from django.http import JsonResponse
+from .models import Member, Donation, Subscription, Expense, ImamSalary
+from .forms import MemberForm, DonationForm, SubscriptionForm, ExpenseForm, ImamSalaryForm
+from django.db.models import Sum, Q
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from datetime import datetime, timedelta
+import calendar
 
-def user_create_update(request):
-    if request.method == 'POST':
-        form = UserForm(request.POST)
+@method_decorator(login_required, name='dispatch')
+class DashboardView(ListView):
+    model = Member
+    template_name = 'dashboard.html'
+    context_object_name = 'members'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) | Q(phone_number__icontains=search_query)
+            )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        year = int(self.request.GET.get('year', datetime.now().year))
+        months = [(calendar.month_name[i], i) for i in range(1, 13)]
+        members = self.get_queryset()
+        subscription_data = []
+        
+        for member in members:
+            subscriptions = Subscription.objects.filter(
+                member=member,
+                subscription_date__year=year
+            ).values('subscription_date__month', 'amount')
+            month_data = {m[1]: 'X' for m in months}
+            for sub in subscriptions:
+                month_data[sub['subscription_date__month']] = sub['amount']
+            subscription_data.append({
+                'member': member,
+                'months': [(month_name, month_data[month_num]) for month_name, month_num in months]
+            })
+        context['subscription_data'] = subscription_data
+        context['year'] = year
+        context['years'] = range(2020, datetime.now().year + 1)
+        context['member_form'] = MemberForm()
+        context['search_query'] = self.request.GET.get('search', '')
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = MemberForm(request.POST)
         if form.is_valid():
-            # Check if user exists by name or mobile
-            name = form.cleaned_data['name']
-            mobile = form.cleaned_data['mobile']
-            user = UserModel.objects.filter(name=name, mobile=mobile).first()
-            
-            if user:
-                # Update existing user
-                for field, value in form.cleaned_data.items():
-                    setattr(user, field, value)
-                user.save()
-            else:
-                # Create new user
-                form.save()
-            return redirect('user_create_update')
-    else:
-        form = UserForm()
-    
-    return render(request, 'admin/user_form.html', {'form': form})
+            form.save()
+            return redirect('dashboard')
+        return self.get(request, *args, **kwargs)
 
-def get_users(request):
-    users = UserModel.objects.all()
-    names = list(set(user.name for user in users if user.name))
-    mobiles = list(set(user.mobile for user in users if user.mobile))
-    return JsonResponse({'names': names, 'mobiles': mobiles})
+@method_decorator(login_required, name='dispatch')
+class ReportView(TemplateView):
+    template_name = 'reports.html'
 
-def get_upi_ids(request):
-    users = UserModel.objects.all()
-    upi_ids = set()
-    for user in users:
-        for field in ['upi_id1', 'upi_id2', 'upi_id3', 'upi_id4']:
-            upi = getattr(user, field)
-            if upi:
-                upi_ids.add(upi)
-    return JsonResponse({'upi_ids': list(upi_ids)})
-
-def check_user_by_upi(request):
-    upi_id = request.GET.get('upi_id')
-    user = UserModel.objects.filter(upi_id1=upi_id).first()
-    if user:
-        return JsonResponse({
-            'user': {
-                'name': user.name,
-                'mobile': user.mobile
-            }
-        })
-    return JsonResponse({'user': None})
-
-
-def user_login(request):
-    if request.method=='POST':
-        data=request.POST
-        username=data.get("username")
-        password=data.get("password")
-        if not username or not password:
-            pass
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        period = self.request.GET.get('period', 'monthly')
+        start_date = self.request.GET.get('start_date')
+        end_date = self.request.GET.get('end_date')
+        
+        if period == 'custom' and start_date and end_date:
+            donations = Donation.objects.filter(donation_date__range=[start_date, end_date])
+            expenses = Expense.objects.filter(expense_date__range=[start_date, end_date])
+            salaries = ImamSalary.objects.filter(payment_date__range=[start_date, end_date])
         else:
-            user=authenticate(request,username=username,password=password)
-            if user:
-                login(request,user)
-                return redirect('user_create')
-
-
-    if request.user.is_authenticated:
-        return redirect('user_create')
-
-
-    return render(request,"login.html",{})
-
-
-def logout_view(request):
-    logout(request)
-    return redirect('login')
-
-@require_GET
-@login_required(login_url="login")
-def user_autocomplete(request):
-    query = request.GET.get('q', '').strip()
-    results = []
-    if query:
-        # Get all matches first
-        users = UserModel.objects.filter(name__icontains=query).values('mobile', 'name')
+            end = datetime.now()
+            if period == 'monthly':
+                start = end.replace(day=1)
+            elif period == '6monthly':
+                start = end - timedelta(days=180)
+            else:  # yearly
+                start = end.replace(month=1, day=1)
+            donations = Donation.objects.filter(donation_date__range=[start, end])
+            expenses = Expense.objects.filter(expense_date__range=[start, end])
+            salaries = ImamSalary.objects.filter(payment_date__range=[start, end])
         
-        # Keep first name per mobile number
-        seen_mobiles = set()
-        unique_results = []
-        for user in users:
-            mobile = user['mobile']
-            if mobile not in seen_mobiles:
-                unique_results.append({'name': user['name'], 'mobile': mobile})
-                seen_mobiles.add(mobile)
+        total_donations = donations.aggregate(Sum('amount'))['amount__sum'] or 0
+        total_expenses = expenses.aggregate(Sum('amount'))['amount__sum'] or 0
+        total_salaries = salaries.aggregate(Sum('amount'))['amount__sum'] or 0
         
-        results = unique_results
+        # Calculate net balance: Donations (incoming) - Expenses (outgoing) - Salaries (outgoing)
+        net_balance = total_donations - total_expenses - total_salaries
+        
+        context['total_donations'] = total_donations
+        context['total_expenses'] = total_expenses
+        context['total_salaries'] = total_salaries
+        context['net_balance'] = net_balance
+        context['period'] = period
+        return context
 
+def search_members(request):
+    query = request.GET.get('q', '')
+    members = Member.objects.filter(name__icontains=query)[:10]
+    results = [{'id': m.id, 'name': m.name, 'phone': m.phone_number} for m in members]
     return JsonResponse({'results': results})
+
+class MemberCreateView(CreateView):
+    model = Member
+    form_class = MemberForm
+    template_name = 'members.html'
+    success_url = reverse_lazy('dashboard')
+
+class DonationCreateView(CreateView):
+    model = Donation
+    form_class = DonationForm
+    template_name = 'donations.html'
+    success_url = reverse_lazy('dashboard')
+
+class SubscriptionCreateView(CreateView):
+    model = Subscription
+    form_class = SubscriptionForm
+    template_name = 'subscriptions.html'
+    success_url = reverse_lazy('dashboard')
+
+class ExpenseCreateView(CreateView):
+    model = Expense
+    form_class = ExpenseForm
+    template_name = 'expenses.html'
+    success_url = reverse_lazy('dashboard')
+
+class ImamSalaryCreateView(CreateView):
+    model = ImamSalary
+    form_class = ImamSalaryForm
+    template_name = 'imam_salary.html'
+    success_url = reverse_lazy('dashboard')
