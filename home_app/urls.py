@@ -4,11 +4,13 @@ from rest_framework import routers
 from django.urls import path
 from .views import (
     DashboardView, MemberView, ReportView, DonationCreateView,
-    SubscriptionCreateView, ExpenseCreateView, ImamSalaryCreateView, search_members
+    SubscriptionCreateView, ExpenseCreateView, ImamSalaryCreateView, search_members,custom_login_view,custom_logout
 )
 
 urlpatterns = [
     path('', DashboardView.as_view(), name='dashboard'),
+    path('login/', custom_login_view, name='login'),
+    path('logout/', custom_logout, name='logout'),
     path('reports/', ReportView.as_view(), name='reports'),
     path('members/', MemberView.as_view(), name='members'),
     # path('members/', MemberCreateView.as_view(), name='members'),
