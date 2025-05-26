@@ -35,7 +35,7 @@
                <tbody>
                    {% for data in subscription_data %}
                    <tr>
-                       <td class="py-2 px-4 border">{{ data.member.name }}</td>
+                       <td class="py-2 px-4 border">{{ data.member.name }} {{ data.member.family_name }}</td>
                        <td class="py-2 px-4 border">{{ data.member.phone_number }}</td>
                        <td class="py-2 px-4 border">{{ year }}</td>
                        {% for _, amount in data.months %}

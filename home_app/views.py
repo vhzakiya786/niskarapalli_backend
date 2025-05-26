@@ -149,7 +149,7 @@ class MemberView(View):
             'members': members_page,
             'form': form,
             'selected_member_id': member_id,
-            'selected_member_name': member.name if member else '',
+            'selected_member_name': member.name+" "+member.family_name if member else '',
             'selected_member_phone': member.phone_number if member else '',
             'selected_member_email': member.email if member else ''
         }
@@ -190,7 +190,7 @@ def search_members(request):
     results = [
         {
             'id': m.id,
-            'name': m.name,
+            'name': m.name+" "+m.family_name,
             'phone': m.phone_number,
             'email': m.email,
             'text': f"{m.name} ({m.phone_number})"
