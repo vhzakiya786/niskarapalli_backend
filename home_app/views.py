@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from datetime import datetime, timedelta
 import calendar
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_required(login_url='login'), name='dispatch')
 class DashboardView(ListView):
     model = Member
     template_name = 'dashboard.html'
@@ -149,7 +149,7 @@ class MemberView(View):
             'members': members_page,
             'form': form,
             'selected_member_id': member_id,
-            'selected_member_name': member.name if member else '',
+            'selected_member_name': member.name+" "+member.family_name if member else '',
             'selected_member_phone': member.phone_number if member else '',
             'selected_member_email': member.email if member else ''
         }
@@ -190,7 +190,7 @@ def search_members(request):
     results = [
         {
             'id': m.id,
-            'name': m.name,
+            'name': m.name+" "+m.family_name,
             'phone': m.phone_number,
             'email': m.email,
             'text': f"{m.name} ({m.phone_number})"
@@ -199,26 +199,52 @@ def search_members(request):
     return JsonResponse({'results': results})
 
 # ... (other views remain unchanged)
+@method_decorator(login_required, name='dispatch')
 class DonationCreateView(CreateView):
     model = Donation
     form_class = DonationForm
     template_name = 'donations.html'
     success_url = reverse_lazy('dashboard')
 
+@method_decorator(login_required, name='dispatch')
 class SubscriptionCreateView(CreateView):
     model = Subscription
     form_class = SubscriptionForm
     template_name = 'subscriptions.html'
     success_url = reverse_lazy('dashboard')
 
+@method_decorator(login_required, name='dispatch')
 class ExpenseCreateView(CreateView):
     model = Expense
     form_class = ExpenseForm
     template_name = 'expenses.html'
     success_url = reverse_lazy('dashboard')
 
+@method_decorator(login_required, name='dispatch')
 class ImamSalaryCreateView(CreateView):
     model = ImamSalary
     form_class = ImamSalaryForm
     template_name = 'imam_salary.html'
     success_url = reverse_lazy('dashboard')
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login,logout
+from django.contrib import messages
+
+def custom_login_view(request):
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('dashboard')  # Redirect to dashboard after login
+        else:
+            messages.error(request, "Invalid username or password.")
+
+    return render(request, 'admin_login.html')
+def custom_logout(request):
+    logout(request)
+    return redirect('dashboard')
+

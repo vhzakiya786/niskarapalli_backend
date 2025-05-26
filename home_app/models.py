@@ -18,9 +18,10 @@ class BaseModel(models.Model):
 
 class Member(BaseModel):
     name = models.CharField(max_length=100)
+    family_name = models.CharField(max_length=100,blank=True,null=True)
     phone_number = models.CharField(
         max_length=15,
-        unique=True,
+        blank=True,null=True,
         validators=[RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Phone number must be valid.")]
     )
     email = models.EmailField(
