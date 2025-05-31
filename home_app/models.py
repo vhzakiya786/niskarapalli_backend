@@ -33,7 +33,10 @@ class Member(BaseModel):
     )
 
     def __str__(self):
-        return self.name
+        name=self.name
+        if self.family_name:
+            name=name+" "+self.family_name
+        return name
 
     class Meta:
         db_table = "members"
