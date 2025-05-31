@@ -243,7 +243,7 @@ class SubscriptionCreateView(CreateView):
     model = Subscription
     form_class = SubscriptionForm
     template_name = 'subscriptions.html'
-    # success_url = reverse_lazy('dashboard')
+    success_url = reverse_lazy('subscriptions')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
