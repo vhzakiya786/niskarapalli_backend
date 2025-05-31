@@ -213,6 +213,25 @@ class SubscriptionCreateView(CreateView):
     template_name = 'subscriptions.html'
     success_url = reverse_lazy('dashboard')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        member_id = self.request.GET.get("member")
+
+        
+        if member_id:
+            try:
+                member = Member.objects.get(id=member_id)
+                values=Subscription.objects.filter(member=member).values('payment_method','upi_id','subscription_date','amount')
+                context['form'] = SubscriptionForm(initial={'member': member,"payment_method":values.last().get("payment_method")})
+                context['records'] = values
+                context['total'] = values.aggregate(total=Sum('amount')).get('total')
+            except Member.DoesNotExist:
+                context['form'] = SubscriptionForm()
+        else:
+            context['form'] = SubscriptionForm()
+
+        return context                                                                                      
+
 @method_decorator(login_required, name='dispatch')
 class ExpenseCreateView(CreateView):
     model = Expense

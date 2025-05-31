@@ -24,7 +24,7 @@
             <tbody>
                 {% for member in members %}
                 <tr class="member-row" data-name="{{ member.name|lower }}" data-phone="{{ member.phone_number|lower }}">
-                    <td class="py-2 px-4 border">{{ member.name }}</td>
+                    <td class="py-2 px-4 border">{{ member.name }} {{ member.family_name }} </td>
                     <td class="py-2 px-4 border">{{ member.phone_number }}</td>
                     <td class="py-2 px-4 border">{{ member.email|default:"N/A" }}</td>
                     <td class="py-2 px-4 border">
