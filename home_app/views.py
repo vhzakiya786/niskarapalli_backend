@@ -245,6 +245,20 @@ class SubscriptionCreateView(CreateView):
     template_name = 'subscriptions.html'
     success_url = reverse_lazy('subscriptions')
 
+    def post(self, request, *args, **kwargs):
+        subscription_id = request.GET.get('subscription_id') or request.POST.get('subscription_id')
+        if subscription_id:
+            subscription = Subscription.objects.filter(id=subscription_id).first()
+
+            form = SubscriptionForm(request.POST, instance=subscription)
+        else:
+            form = SubscriptionForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('subscriptions')
+        return redirect('dashboard')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         member_id = self.request.GET.get("member")

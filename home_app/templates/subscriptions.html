@@ -45,6 +45,7 @@
         <table class="min-w-full bg-white border" id="value-table">
             <thead>
                 <tr>
+                    <th class="py-2 px-4 border">id</th>
                     <th class="py-2 px-4 border">Payment Method</th>
                     <th class="py-2 px-4 border">UPI ID</th>
                     <th class="py-2 px-4 border">Date</th>
@@ -56,6 +57,7 @@
                 {% for value in records %}
                 <tr class="value-row" >
              
+                    <td class="py-2 px-4 border">{{ value.id }}  </td>
                     <td class="py-2 px-4 border">{{ value.payment_method }}  </td>
                     <td class="py-2 px-4 border">{{ value.upi_id |default:"N/A" }}</td>
                     <td class="py-2 px-4 border">{{ value.subscription_date| date }}</td>
