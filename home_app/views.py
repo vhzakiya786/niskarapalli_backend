@@ -248,11 +248,12 @@ class SubscriptionCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         member_id = self.request.GET.get("member")
+        subscription_id = self.request.GET.get("subscription_id")
         
         if member_id:
             try:
                 member = Member.objects.get(id=member_id)
-                values=Subscription.objects.filter(member=member).values('payment_method','upi_id','subscription_date','amount')
+                values=Subscription.objects.filter(member=member).values('id','payment_method','upi_id','subscription_date','amount').order_by('subscription_date')
                 payment_method='CASH'
                 if values.last():
                     payment_method=values.last().get("payment_method")
@@ -261,6 +262,12 @@ class SubscriptionCreateView(CreateView):
                 context['total'] = values.aggregate(total=Sum('amount')).get('total')
             except Member.DoesNotExist:
                 context['form'] = SubscriptionForm()
+        elif subscription_id:
+            instance=Subscription.objects.get(id=subscription_id)
+            values=Subscription.objects.filter(member=instance.member).values('id','payment_method','upi_id','subscription_date','amount').order_by('subscription_date')
+            context['form'] = SubscriptionForm(instance=instance)
+            context['records'] = values
+            context['total'] = values.aggregate(total=Sum('amount')).get('total')
         else:
             context['form'] = SubscriptionForm()
 
