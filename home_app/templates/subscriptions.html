@@ -80,3 +80,11 @@
         </table>
     </div>
 {% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('id_member').addEventListener('change', function() {
+    window.location.href = '{% url "subscriptions" %}?member=' + this.value;
+});
+</script>
+{% endblock %}
