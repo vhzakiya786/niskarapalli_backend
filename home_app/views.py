@@ -124,7 +124,14 @@ class MemberView(View):
     paginate_by = 10
 
     def get(self, request, *args, **kwargs):
-        members = Member.objects.all().order_by('name')
+        query=request.GET.get('search','')
+        if query:
+            members = Member.objects.filter(
+                Q(name__icontains=query) | Q(family_name__icontains=query) | Q(phone_number__icontains=query)
+                ).order_by('name')
+        else:
+            members = Member.objects.all().order_by('name')
+
         page = request.GET.get('page', 1)
         from django.core.paginator import Paginator
         paginator = Paginator(members, self.paginate_by)

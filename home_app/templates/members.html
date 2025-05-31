@@ -224,3 +224,23 @@
     });
 </script>
 {% endblock %}
+
+{% block extra_scripts %}
+
+
+<script>
+document.getElementById('member-search').addEventListener('keydown', function(event) {
+    if (event.key === "Enter") {
+        window.location.href = '{% url "members" %}?search=' + this.value;
+    }
+});
+
+let typingTimer;
+document.getElementById('member-search').addEventListener('input', function() {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+        window.location.href = '{% url "members" %}?search=' + this.value;
+    }, 3000); // Executes after 3 seconds of inactivity
+});
+</script>
+{% endblock %}
