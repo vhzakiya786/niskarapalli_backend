@@ -124,7 +124,14 @@ class MemberView(View):
     paginate_by = 10
 
     def get(self, request, *args, **kwargs):
-        members = Member.objects.all().order_by('name')
+        query=request.GET.get('search','')
+        if query:
+            members = Member.objects.filter(
+                Q(name__icontains=query) | Q(family_name__icontains=query) | Q(phone_number__icontains=query)
+                ).order_by('name')
+        else:
+            members = Member.objects.all().order_by('name')
+
         page = request.GET.get('page', 1)
         from django.core.paginator import Paginator
         paginator = Paginator(members, self.paginate_by)
@@ -137,7 +144,9 @@ class MemberView(View):
                 form = MemberForm(instance=member, initial={
                     'name': member.name,
                     'phone_number': member.phone_number,
-                    'email': member.email
+                    'email': member.email,
+                    'family_name':member.family_name
+
                 })
             else:
                 form = MemberForm()
@@ -149,9 +158,11 @@ class MemberView(View):
             'members': members_page,
             'form': form,
             'selected_member_id': member_id,
-            'selected_member_name': member.name+" "+member.family_name if member else '',
+            'selected_member_name': member.name if member else '',
+            'selected_member_family_name': member.family_name if member else '',
             'selected_member_phone': member.phone_number if member else '',
-            'selected_member_email': member.email if member else ''
+            'selected_member_email': member.email if member else '',
+            'current_page':page,
         }
         return render(request, self.template_name, context)
 
@@ -179,21 +190,26 @@ class MemberView(View):
             'members': members_page,
             'form': form,
             'selected_member_id': member_id,
+            'selected_member_name': member.name if member else '',
+            'selected_member_family_name': member.family_name if member else '',
+            'selected_member_phone': member.phone_number if member else '',
+            'selected_member_email': member.email if member else '',
+            'current_page':page
         }
         return render(request, self.template_name, context)
 
 def search_members(request):
     query = request.GET.get('q', '')
     members = Member.objects.filter(
-        Q(name__icontains=query) | Q(phone_number__icontains=query)
+        Q(name__icontains=query) | Q(family_name__icontains=query) | Q(phone_number__icontains=query)
     )[:10]
     results = [
         {
             'id': m.id,
-            'name': m.name+" "+m.family_name,
+            'name': m.name,
             'phone': m.phone_number,
             'email': m.email,
-            'text': f"{m.name} ({m.phone_number})"
+            'family_name':m.family_name
         } for m in members
     ]
     return JsonResponse({'results': results})
@@ -206,12 +222,46 @@ class DonationCreateView(CreateView):
     template_name = 'donations.html'
     success_url = reverse_lazy('dashboard')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        member_id = self.request.GET.get("member")
+        try:
+            member = Member.objects.get(id=member_id)
+            if member:
+                values=Donation.objects.filter(member=member).values('member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
+            else:
+                values=Donation.objects.values('member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
+
+            context['records'] = values
+            context['total'] = values.aggregate(total=Sum('amount')).get('total')
+        except Donation.DoesNotExist:
+            pass
+        return context 
+
 @method_decorator(login_required, name='dispatch')
 class SubscriptionCreateView(CreateView):
     model = Subscription
     form_class = SubscriptionForm
     template_name = 'subscriptions.html'
     success_url = reverse_lazy('dashboard')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        member_id = self.request.GET.get("member")
+        
+        if member_id:
+            try:
+                member = Member.objects.get(id=member_id)
+                values=Subscription.objects.filter(member=member).values('payment_method','upi_id','subscription_date','amount')
+                context['form'] = SubscriptionForm(initial={'member': member,"payment_method":values.last().get("payment_method")})
+                context['records'] = values
+                context['total'] = values.aggregate(total=Sum('amount')).get('total')
+            except Member.DoesNotExist:
+                context['form'] = SubscriptionForm()
+        else:
+            context['form'] = SubscriptionForm()
+
+        return context                                                                                      
 
 @method_decorator(login_required, name='dispatch')
 class ExpenseCreateView(CreateView):
@@ -220,12 +270,34 @@ class ExpenseCreateView(CreateView):
     template_name = 'expenses.html'
     success_url = reverse_lazy('dashboard')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            values=Expense.objects.values('amount','expense_date','purpose','payment_method','upi_id','transaction_id','notes')
+            context['records'] = values
+            context['total'] = values.aggregate(total=Sum('amount')).get('total')
+        except Expense.DoesNotExist:
+            pass
+        return context  
+
 @method_decorator(login_required, name='dispatch')
 class ImamSalaryCreateView(CreateView):
     model = ImamSalary
     form_class = ImamSalaryForm
     template_name = 'imam_salary.html'
     success_url = reverse_lazy('dashboard')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            values=ImamSalary.objects.values('amount','payment_date','payment_method','upi_id','transaction_id','notes')
+            context['records'] = values
+            context['total'] = values.aggregate(total=Sum('amount')).get('total')
+        except ImamSalary.DoesNotExist:
+            pass
+ 
+
+        return context  
 
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login,logout

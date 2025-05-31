@@ -1,6 +1,14 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block extra_head %}
+<style>
+    .family_name_class{
+           color: green; 
+        }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mx-auto p-6">
     <h1 class="text-3xl font-bold mb-6">Manage Members</h1>
@@ -24,11 +32,11 @@
             <tbody>
                 {% for member in members %}
                 <tr class="member-row" data-name="{{ member.name|lower }}" data-phone="{{ member.phone_number|lower }}">
-                    <td class="py-2 px-4 border">{{ member.name }}</td>
+                    <td class="py-2 px-4 border">{{ member.name }} <span class="family_name_class">{{ member.family_name  |default:"" }}</span> </td>
                     <td class="py-2 px-4 border">{{ member.phone_number }}</td>
                     <td class="py-2 px-4 border">{{ member.email|default:"N/A" }}</td>
                     <td class="py-2 px-4 border">
-                        <a href="?member_id={{ member.id }}" class="text-blue-500 hover:underline">Edit</a>
+                        <a href="?member_id={{ member.id }}&page={{current_page}}" class="text-blue-500 hover:underline">Edit</a>
                     </td>
                 </tr>
                 {% empty %}
@@ -84,17 +92,25 @@
         {% endif %}
         <div class="flex flex-wrap -mx-2">
             <div class="w-full md:w-1/2 px-2 mb-4">
-                <label for="id_name" class="block text-sm font-medium text-gray-700">Name</label>
-                <select id="id_name" name="name" class="border p-2 rounded w-full autocomplete-name"></select>
+                <label for="id_search" class="block text-sm font-medium text-gray-700">Search</label>
+                <select id="id_search" name="search" class="border p-2 rounded w-full autocomplete-name"></select>
                 <input type="hidden" id="id_member_id" name="member_id" value="{{ selected_member_id|default_if_none:'' }}">
             </div>
             <div class="w-full md:w-1/2 px-2 mb-4">
+                <label for="id_name" class="block text-sm font-medium text-gray-700">Name</label>
+                {{ form.name }}
+            </div>
+            <div class="w-full md:w-1/2 px-2 mb-4">
                 <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                <select id="id_phone_number" name="phone_number" class="border p-2 rounded w-full autocomplete-phone"></select>
+                {{ form.phone_number }}
             </div>
             <div class="w-full md:w-1/2 px-2 mb-4">
                 <label for="id_email" class="block text-sm font-medium text-gray-700">Email</label>
                 {{ form.email }}
+            </div>
+            <div class="w-full md:w-1/2 px-2 mb-4">
+                <label for="id_email" class="block text-sm font-medium text-gray-700">Family Name</label>
+                {{ form.family_name }}
             </div>
         </div>
         <div class="flex space-x-4">
@@ -126,9 +142,7 @@
                         results: data.results.map(function(member) {
                             return {
                                 id: member.id,
-                                text: member.text,
-                                phone: member.phone,
-                                email: member.email
+                                text: member.name+" "+member.family_name
                             };
                         })
                     };
@@ -141,52 +155,27 @@
             tags: true
         });
 
-        // Initialize Select2 for phone number autocomplete
-        $('.autocomplete-phone').select2({
-            ajax: {
-                url: "{% url 'search_members' %}",
-                dataType: 'json',
-                delay: 250,
-                data: function(params) {
-                    return {
-                        q: params.term
-                    };
-                },
-                processResults: function(data) {
-                    return {
-                        results: data.results.map(function(member) {
-                            return {
-                                id: member.id,
-                                text: member.phone,
-                                name: member.name,
-                                email: member.email
-                            };
-                        })
-                    };
-                },
-                cache: true
-            },
-            placeholder: 'Enter phone number',
-            minimumInputLength: 1,
-            allowClear: true,
-            tags: true
-        });
-
-        // Pre-fill form if editing
+  
         {% if selected_member_id %}
             var memberId = "{{ selected_member_id }}";
-            var nameOption = new Option("{{ selected_member_name }} ({{ selected_member_phone }})", memberId, true, true);
-            var phoneOption = new Option("{{ selected_member_phone }}", memberId, true, true);
-            $('#id_name').append(nameOption).trigger('change');
-            $('#id_phone_number').append(phoneOption).trigger('change');
+            var nameOption = new Option("{{ selected_member_name }} {{ selected_member_phone |default:'' }}", memberId, true, true);
+            var phoneOption = new Option("{{ selected_member_phone |default:'' }}", memberId, true, true);
+            $('#id_search').append(nameOption).trigger('change');
+            $('#id_phone_number').val("{{ selected_member_phone | default:'' }}");
+            $('#id_name').val("{{ selected_member_name|default_if_none:'' }}");
             $('#id_email').val("{{ selected_member_email|default_if_none:'' }}");
+            $('#id_family_name').val("{{ selected_member_family_name|default_if_none:'' }}");
         {% endif %}
 
         // Handle name selection
-        $('#id_name').on('select2:select', function(e) {
+        $('#id_search').on('select2:select', function(e) {
             var data = e.params.data;
+            console.log(data);
+            console.log("seee");
+            var id_member_id=$('#id_member_id').val();
+            console.log(id_member_id);
             // Check if a different member was selected (not a new name)
-            if (data.id !== data.text) {
+            if (data.id != id_member_id) {
                 $.ajax({
                     url: "{% url 'search_members' %}",
                     data: { q: data.text.split(' (')[0] },
@@ -195,10 +184,12 @@
                         var member = response.results.find(m => m.id == data.id);
                         if (member) {
                             $('#id_member_id').val(member.id);
+                            $('#id_name').val(member.name);
                             // Only update phone and email if a different member is selected
-                            var phoneOption = new Option(member.phone, member.id, true, true);
-                            $('#id_phone_number').empty().append(phoneOption).trigger('change');
+                          
+                            $('#id_phone_number').val(member.phone || '');
                             $('#id_email').val(member.email || '');
+                            $('#id_family_name').val(member.family_name || '');
                         }
                     }
                 });
@@ -206,43 +197,16 @@
             // If a new name is entered (data.id === data.text), do not reset other fields
         });
 
-        // Handle phone number selection
-        $('#id_phone_number').on('select2:select', function(e) {
-            var data = e.params.data;
-            // Check if a different member was selected (not a new phone number)
-            if (data.id !== data.text) {
-                $.ajax({
-                    url: "{% url 'search_members' %}",
-                    data: { q: data.text },
-                    dataType: 'json',
-                    success: function(response) {
-                        var member = response.results.find(m => m.id == data.id);
-                        if (member) {
-                            $('#id_member_id').val(member.id);
-                            // Only update name and email if a different member is selected
-                            var nameOption = new Option(member.text, member.id, true, true);
-                            $('#id_name').empty().append(nameOption).trigger('change');
-                            $('#id_email').val(member.email || '');
-                        }
-                    }
-                });
-            }
-            // If a new phone number is entered (data.id === data.text), do not reset other fields
-        });
 
-        // Clear form fields when the user clears the name selection
         $('#id_name').on('select2:clear', function(e) {
             $('#id_member_id').val('');
             $('#id_phone_number').val('').trigger('change');
             $('#id_email').val('');
+            $('#id_family_name').val('');
         });
 
         // Clear form fields when the user clears the phone number selection
-        $('#id_phone_number').on('select2:clear', function(e) {
-            $('#id_member_id').val('');
-            $('#id_name').val('').trigger('change');
-            $('#id_email').val('');
-        });
+
 
         // Dynamic filtering of the members list
         $('#member-search').on('input', function() {
@@ -258,5 +222,25 @@
             });
         });
     });
+</script>
+{% endblock %}
+
+{% block extra_scripts %}
+
+
+<script>
+document.getElementById('member-search').addEventListener('keydown', function(event) {
+    if (event.key === "Enter") {
+        window.location.href = '{% url "members" %}?search=' + this.value;
+    }
+});
+
+let typingTimer;
+document.getElementById('member-search').addEventListener('input', function() {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+        window.location.href = '{% url "members" %}?search=' + this.value;
+    }, 3000); // Executes after 3 seconds of inactivity
+});
 </script>
 {% endblock %}

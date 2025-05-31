@@ -5,8 +5,9 @@ from django.core.validators import RegexValidator
 class MemberForm(forms.ModelForm):
     class Meta:
         model = Member
-        fields = ['name', 'phone_number', 'email']
+        fields = ['name', 'phone_number', 'email','family_name']
         widgets = {
+            'name': forms.TextInput(attrs={ "class":"border p-2 rounded w-full autocomplete-name"}),
             'phone_number': forms.TextInput(attrs={'placeholder': '+1234567890'}),
             'email': forms.EmailInput(attrs={'placeholder': 'example@email.com'}),
         }

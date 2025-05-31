@@ -40,4 +40,48 @@
         </div>
     </form>
 </div>
+
+    <div class="overflow-x-auto mb-8">
+        <table class="min-w-full bg-white border" id="value-table">
+            <thead>
+                <tr>
+
+                    <th class="py-2 px-4 border">Amount</th>
+                    <th class="py-2 px-4 border">Date</th>
+                    <th class="py-2 px-4 border">Payment Method</th>
+                    <th class="py-2 px-4 border">UPI ID</th>
+                    <th class="py-2 px-4 border">Transaction ID</th>
+                    <th class="py-2 px-4 border">Notes</th>
+                
+                </tr>
+            </thead>
+            <tbody>
+                {% for value in records %}
+                <tr class="value-row" >
+             
+                    <td class="py-2 px-4 border">{{ value.amount }}  </td>
+                    <td class="py-2 px-4 border">{{ value.payment_date| date }}</td>
+                    <td class="py-2 px-4 border">{{ value.payment_method }}  </td>
+                    <td class="py-2 px-4 border">{{ value.upi_id |default:"N/A" }}</td>
+                    <td class="py-2 px-4 border">{{ value.transaction_id }}</td>
+                    <td class="py-2 px-4 border">{{ value.notes }}</td>
+              
+                </tr>
+                
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="py-2 px-4 border text-center">No values found.</td>
+                </tr>
+                {% endfor %}
+                <tr class="value-row" >
+             
+                    <td class="py-2 px-4 border"> Total</td>
+                    <td class="py-2 px-4 "></td>
+                    <td class="py-2 px-4 "></td>
+                    <td class="py-2 px-4 border">{{ total |default:"N/A" }}</td>
+              
+                </tr>
+            </tbody>
+        </table>
+    </div>
 {% endblock %}
