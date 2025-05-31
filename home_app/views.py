@@ -222,6 +222,16 @@ class DonationCreateView(CreateView):
     template_name = 'donations.html'
     success_url = reverse_lazy('dashboard')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            values=Donation.objects.values('member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
+            context['records'] = values
+            context['total'] = values.aggregate(total=Sum('amount')).get('total')
+        except Donation.DoesNotExist:
+            pass
+        return context 
+
 @method_decorator(login_required, name='dispatch')
 class SubscriptionCreateView(CreateView):
     model = Subscription
@@ -232,7 +242,6 @@ class SubscriptionCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         member_id = self.request.GET.get("member")
-
         
         if member_id:
             try:
@@ -255,12 +264,34 @@ class ExpenseCreateView(CreateView):
     template_name = 'expenses.html'
     success_url = reverse_lazy('dashboard')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            values=Expense.objects.values('amount','expense_date','purpose','payment_method','upi_id','transaction_id','notes')
+            context['records'] = values
+            context['total'] = values.aggregate(total=Sum('amount')).get('total')
+        except Expense.DoesNotExist:
+            pass
+        return context  
+
 @method_decorator(login_required, name='dispatch')
 class ImamSalaryCreateView(CreateView):
     model = ImamSalary
     form_class = ImamSalaryForm
     template_name = 'imam_salary.html'
     success_url = reverse_lazy('dashboard')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            values=ImamSalary.objects.values('amount','payment_date','payment_method','upi_id','transaction_id','notes')
+            context['records'] = values
+            context['total'] = values.aggregate(total=Sum('amount')).get('total')
+        except ImamSalary.DoesNotExist:
+            pass
+ 
+
+        return context  
 
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login,logout
