@@ -137,7 +137,9 @@ class MemberView(View):
                 form = MemberForm(instance=member, initial={
                     'name': member.name,
                     'phone_number': member.phone_number,
-                    'email': member.email
+                    'email': member.email,
+                    'family_name':member.family_name
+
                 })
             else:
                 form = MemberForm()
@@ -149,9 +151,11 @@ class MemberView(View):
             'members': members_page,
             'form': form,
             'selected_member_id': member_id,
-            'selected_member_name': member.name+" "+member.family_name if member else '',
+            'selected_member_name': member.name if member else '',
+            'selected_member_family_name': member.family_name if member else '',
             'selected_member_phone': member.phone_number if member else '',
-            'selected_member_email': member.email if member else ''
+            'selected_member_email': member.email if member else '',
+            'current_page':page,
         }
         return render(request, self.template_name, context)
 
@@ -179,21 +183,26 @@ class MemberView(View):
             'members': members_page,
             'form': form,
             'selected_member_id': member_id,
+            'selected_member_name': member.name if member else '',
+            'selected_member_family_name': member.family_name if member else '',
+            'selected_member_phone': member.phone_number if member else '',
+            'selected_member_email': member.email if member else '',
+            'current_page':page
         }
         return render(request, self.template_name, context)
 
 def search_members(request):
     query = request.GET.get('q', '')
     members = Member.objects.filter(
-        Q(name__icontains=query) | Q(phone_number__icontains=query)
+        Q(name__icontains=query) | Q(family_name__icontains=query) | Q(phone_number__icontains=query)
     )[:10]
     results = [
         {
             'id': m.id,
-            'name': m.name+" "+m.family_name,
+            'name': m.name,
             'phone': m.phone_number,
             'email': m.email,
-            'text': f"{m.name} ({m.phone_number})"
+            'family_name':m.family_name
         } for m in members
     ]
     return JsonResponse({'results': results})
