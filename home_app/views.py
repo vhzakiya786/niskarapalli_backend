@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy,reverse
 from django.http import JsonResponse
 from .models import Member, Donation, Subscription, Expense, ImamSalary
 from .forms import MemberForm, DonationForm, SubscriptionForm, ExpenseForm, ImamSalaryForm
@@ -250,8 +250,9 @@ class SubscriptionCreateView(CreateView):
         data=self.request.POST
         member=data.get('member')
         subscription_date=data.get('subscription_date')
+        duplicate=data.get('duplicate')
         subscription=None
-        if member and subscription_date:
+        if member and subscription_date and not duplicate:
             year=subscription_date.split("-")[0]
             month=subscription_date.split("-")[1]
             subscription=Subscription.objects.filter(member=member,subscription_date__year=year,subscription_date__month=month).first()
@@ -265,7 +266,9 @@ class SubscriptionCreateView(CreateView):
 
         if form.is_valid():
             form.save()
-            return redirect('subscriptions')
+            url = reverse('subscriptions') + f"?member={member}"
+
+            return redirect(url)
         return redirect('dashboard')
 
     def get_context_data(self, **kwargs):
