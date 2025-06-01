@@ -247,9 +247,18 @@ class SubscriptionCreateView(CreateView):
 
     def post(self, request, *args, **kwargs):
         subscription_id = request.GET.get('subscription_id') or request.POST.get('subscription_id')
-        if subscription_id:
+        data=self.request.POST
+        member=data.get('member')
+        subscription_date=data.get('subscription_date')
+        subscription=None
+        if member and subscription_date:
+            year=subscription_date.split("-")[0]
+            month=subscription_date.split("-")[1]
+            subscription=Subscription.objects.filter(member=member,subscription_date__year=year,subscription_date__month=month).first()
+        if subscription:
+            form = SubscriptionForm(request.POST, instance=subscription)
+        elif subscription_id:
             subscription = Subscription.objects.filter(id=subscription_id).first()
-
             form = SubscriptionForm(request.POST, instance=subscription)
         else:
             form = SubscriptionForm(request.POST)
