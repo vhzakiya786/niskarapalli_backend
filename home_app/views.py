@@ -58,7 +58,7 @@ class DashboardView(ListView):
             return redirect('dashboard')
         return self.get(request, *args, **kwargs)
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_required(login_url='login'), name='dispatch')
 class ReportView(TemplateView):
     template_name = 'reports.html'
 
@@ -118,7 +118,7 @@ class ReportView(TemplateView):
 
 # ... (other imports and views remain unchanged)
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_required(login_url='login'), name='dispatch')
 class MemberView(View):
     template_name = 'members.html'
     paginate_by = 10
@@ -215,7 +215,7 @@ def search_members(request):
     return JsonResponse({'results': results})
 
 # ... (other views remain unchanged)
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_required(login_url='login'), name='dispatch')
 class DonationCreateView(CreateView):
     model = Donation
     form_class = DonationForm
@@ -240,7 +240,7 @@ class DonationCreateView(CreateView):
             pass
         return context 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_required(login_url='login'), name='dispatch')
 class SubscriptionCreateView(CreateView):
     model = Subscription
     form_class = SubscriptionForm
@@ -301,7 +301,7 @@ class SubscriptionCreateView(CreateView):
 
         return context                                                                                      
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_required(login_url='login'), name='dispatch')
 class ExpenseCreateView(CreateView):
     model = Expense
     form_class = ExpenseForm
@@ -318,7 +318,7 @@ class ExpenseCreateView(CreateView):
             pass
         return context  
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_required(login_url='login'), name='dispatch')
 class ImamSalaryCreateView(CreateView):
     model = ImamSalary
     form_class = ImamSalaryForm
