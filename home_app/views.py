@@ -225,8 +225,10 @@ class DonationCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         member_id = self.request.GET.get("member")
+        member=None
         try:
-            member = Member.objects.get(id=member_id)
+            if member_id:
+                member = Member.objects.get(id=member_id)
             if member:
                 values=Donation.objects.filter(member=member).values('member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
             else:
