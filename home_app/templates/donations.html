@@ -64,6 +64,7 @@
                     <th class="py-2 px-4 border">Transaction ID</th>
                     <th class="py-2 px-4 border">Purpose</th>
                     <th class="py-2 px-4 border">is_anonymous</th>
+                    <th class="py-2 px-4 border">Edit</th>
                 
                 </tr>
             </thead>
@@ -78,6 +79,9 @@
                     <td class="py-2 px-4 border">{{ value.transaction_id }}</td>
                     <td class="py-2 px-4 border">{{ value.purpose }}</td>
                     <td class="py-2 px-4 border">{{ value.is_anonymous }}</td>
+                    <td class="py-2 px-4 border"> 
+                        <a href="?donation_id={{ value.id }}" class="text-blue-500 hover:underline">Edit</a>
+                    </td>
               
                 </tr>
                 
