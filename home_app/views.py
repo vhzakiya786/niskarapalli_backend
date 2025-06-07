@@ -251,19 +251,19 @@ class DonationCreateView(CreateView):
             if member_id:
                 member = Member.objects.get(id=member_id)
                 if member:
-                    values=Donation.objects.filter(member=member).values('id','member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
+                    values=Donation.objects.filter(member=member).values('id','member__name','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
                     payment_method='CASH'
                     if values.last():
                         payment_method=values.last().get("payment_method")
                     context['form'] = DonationForm(initial={'member': member,"payment_method":payment_method})
                 else:
-                    values=Donation.objects.values('id','member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
+                    values=Donation.objects.values('id','member__name','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
             elif donation_id:
                 instance=Donation.objects.get(id=donation_id)
                 context['form'] = DonationForm(instance=instance)
-                values=Donation.objects.filter(member=instance.member).values('id','member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
+                values=Donation.objects.filter(member=instance.member).values('id','member__name','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
             else:
-                values=Donation.objects.values('id','member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
+                values=Donation.objects.values('id','member__name','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
 
             context['records'] = values
             context['total'] = values.aggregate(total=Sum('amount')).get('total')

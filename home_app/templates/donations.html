@@ -71,7 +71,15 @@
             <tbody>
                 {% for value in records %}
                 <tr class="value-row" >
-                    <td class="py-2 px-4 border">{{ value.member }}  </td>
+                    <td class="py-2 px-4 border">
+                        {% if value.member__name %}
+                          {{ value.member__name }}
+                        {% else %}
+                          <!-- Fallback text or empty if no member -->
+                          No member
+                        {% endif %}
+                      </td>
+                      
                     <td class="py-2 px-4 border">{{ value.amount }}  </td>
                     <td class="py-2 px-4 border">{{ value.donation_date| date }}</td>
                     <td class="py-2 px-4 border">{{ value.payment_method }}  </td>

@@ -25,8 +25,8 @@ class DonationForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        if cleaned_data.get('is_anonymous') and cleaned_data.get('member'):
-            raise forms.ValidationError("Anonymous donations cannot have a member associated.")
+        # if cleaned_data.get('is_anonymous') and cleaned_data.get('member'):
+        #     raise forms.ValidationError("Anonymous donations cannot have a member associated.")
         return cleaned_data
 
 class SubscriptionForm(forms.ModelForm):
