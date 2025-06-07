@@ -220,7 +220,7 @@ class DonationCreateView(CreateView):
     model = Donation
     form_class = DonationForm
     template_name = 'donations.html'
-    success_url = reverse_lazy('dashboard')
+    success_url = reverse_lazy('donations')
 
     def post(self, request, *args, **kwargs):
         donation_id = request.GET.get('donation_id') or request.POST.get('donation_id')
@@ -240,7 +240,7 @@ class DonationCreateView(CreateView):
             url = reverse('donations') + f"?member={member}"
 
             return redirect(url)
-        return redirect('dashboard')
+        return redirect('donations')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
