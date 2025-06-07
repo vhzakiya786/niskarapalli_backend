@@ -249,8 +249,14 @@ class DonationCreateView(CreateView):
         try:
             if member_id:
                 member = Member.objects.get(id=member_id)
-            if member:
-                values=Donation.objects.filter(member=member).values('member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
+                if member:
+                    values=Donation.objects.filter(member=member).values('member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
+                    payment_method='CASH'
+                    if values.last():
+                        payment_method=values.last().get("payment_method")
+                    context['form'] = SubscriptionForm(initial={'member': member,"payment_method":payment_method})
+                else:
+                    values=Donation.objects.values('member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
             else:
                 values=Donation.objects.values('member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
 
