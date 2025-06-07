@@ -246,6 +246,7 @@ class DonationCreateView(CreateView):
         context = super().get_context_data(**kwargs)
         member_id = self.request.GET.get("member")
         member=None
+        donation_id = self.request.GET.get('donation_id')
         try:
             if member_id:
                 member = Member.objects.get(id=member_id)
@@ -257,6 +258,10 @@ class DonationCreateView(CreateView):
                     context['form'] = DonationForm(initial={'member': member,"payment_method":payment_method})
                 else:
                     values=Donation.objects.values('id','member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
+            elif donation_id:
+                instance=Donation.objects.get(id=donation_id)
+                context['form'] = DonationForm(instance=instance)
+                values=Donation.objects.filter(member=instance.member).values('id','member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
             else:
                 values=Donation.objects.values('id','member','amount','donation_date','purpose','payment_method','upi_id','transaction_id','is_anonymous')
 
