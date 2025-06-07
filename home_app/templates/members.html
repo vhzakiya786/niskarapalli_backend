@@ -23,6 +23,7 @@
         <table class="min-w-full bg-white border" id="member-table">
             <thead>
                 <tr>
+                    <th class="py-2 px-4 border">ID</th>
                     <th class="py-2 px-4 border">Name</th>
                     <th class="py-2 px-4 border">Phone Number</th>
                     <th class="py-2 px-4 border">Email</th>
@@ -32,6 +33,7 @@
             <tbody>
                 {% for member in members %}
                 <tr class="member-row" data-name="{{ member.name|lower }}" data-phone="{{ member.phone_number|lower }}">
+                    <td class="py-2 px-4 border">{{ member.id }}</td>
                     <td class="py-2 px-4 border">{{ member.name }} <span class="family_name_class">{{ member.family_name  |default:"" }}</span> </td>
                     <td class="py-2 px-4 border">{{ member.phone_number }}</td>
                     <td class="py-2 px-4 border">{{ member.email|default:"N/A" }}</td>
