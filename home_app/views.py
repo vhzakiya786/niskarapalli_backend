@@ -222,6 +222,26 @@ class DonationCreateView(CreateView):
     template_name = 'donations.html'
     success_url = reverse_lazy('dashboard')
 
+    def post(self, request, *args, **kwargs):
+        donation_id = request.GET.get('donation_id') or request.POST.get('donation_id')
+        data=self.request.POST
+        member=data.get('member')
+
+        subscription=None
+
+        if donation_id:
+            subscription = Donation.objects.filter(id=donation_id).first()
+            form = DonationForm(request.POST, instance=subscription)
+        else:
+            form = DonationForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            url = reverse('donations') + f"?member={member}"
+
+            return redirect(url)
+        return redirect('dashboard')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         member_id = self.request.GET.get("member")
