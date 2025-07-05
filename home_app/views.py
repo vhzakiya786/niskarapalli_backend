@@ -46,7 +46,7 @@ class DashboardView(ListView):
             })
         context['subscription_data'] = subscription_data
         context['year'] = year
-        context['years'] = range(2020, datetime.now().year + 1)
+        context['years'] = range(2024, datetime.now().year + 1)
         context['member_form'] = MemberForm()
         context['search_query'] = self.request.GET.get('search', '')
         return context
