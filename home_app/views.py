@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View
 from django.urls import reverse_lazy,reverse
 from django.http import JsonResponse
+
+from home_app.helpers import human_readable_date
 from .models import Member, Donation, Subscription, Expense, ImamSalary
 from .forms import MemberForm, DonationForm, SubscriptionForm, ExpenseForm, ImamSalaryForm
 from django.db.models import Sum, Q
@@ -36,10 +38,10 @@ class DashboardView(ListView):
             subscriptions = Subscription.objects.filter(
                 member=member,
                 subscription_date__year=year
-            ).values('subscription_date__month', 'amount')
+            ).values('subscription_date__month', 'amount','payment_method')
             month_data = {m[1]: 'X' for m in months}
             for sub in subscriptions:
-                month_data[sub['subscription_date__month']] = sub['amount']
+                month_data[sub['subscription_date__month']] ={"amount":sub['amount'],"payment_method":sub['payment_method']}
             subscription_data.append({
                 'member': member,
                 'months': [(month_name, month_data[month_num]) for month_name, month_num in months]
@@ -86,7 +88,11 @@ class ReportView(TemplateView):
                 salaries = ImamSalary.objects.none()
         else:
             end = datetime.now()
-            if period == 'monthly':
+            if end.day < 28 and period == 'monthly':
+                first_of_this_month = end.replace(day=1)
+                end = first_of_this_month - timedelta(days=1)
+                start=end.replace(day=1)
+            elif period == 'monthly':
                 start = end.replace(day=1)
             elif period == '6monthly':
                 start = end - timedelta(days=180)
@@ -114,6 +120,8 @@ class ReportView(TemplateView):
         context['total_expenses_all'] = total_expenses_all
         context['net_balance'] = net_balance
         context['period'] = period
+        context['start'] = human_readable_date(start)
+        context['end'] = human_readable_date(end)
         return context
 
 # ... (other imports and views remain unchanged)

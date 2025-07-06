@@ -34,13 +34,17 @@
                </thead>
                <tbody>
                    {% for data in subscription_data %}
-                   <tr>
+                   <tr class="border-t-2 border-gray-400">
                        <td class="py-2 px-4 border">{{ data.member.name }} {{ data.member.family_name }}</td>
                        <td class="py-2 px-4 border">{{ data.member.phone_number }}</td>
                        <td class="py-2 px-4 border">{{ year }}</td>
-                       {% for _, amount in data.months %}
-                       <td class="py-2 px-4 border {% if amount == 'X' %}bg-red-100{% else %}bg-green-100{% endif %}">
-                           {{ amount }}
+                       {% for __, amount in data.months %}
+                       <td class="py-2 px-4 border {% if amount == 'X' %}bg-red-50{% else %}bg-green-50{% endif %}">
+                           <strong>{{amount.amount}}</strong>
+                           <span class="text-xs {% if amount.payment_method == 'CASH' %}text-yellow-600{% else %}text-blue-600{% endif %}">
+                                {{ amount.payment_method }}
+                            </span>
+
                        </td>
                        {% endfor %}
                        <td class="py-2 px-4 border">

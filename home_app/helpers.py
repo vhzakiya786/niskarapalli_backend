@@ -65,3 +65,8 @@ def fn_update_google_sheet(instance):
     else:
         # If the record doesn't exist, append a new row
         wks.append_table(values=list(record_data.values()))
+
+def human_readable_date(dt):
+    day = dt.day
+    suffix = 'th' if 11 <= day <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')
+    return dt.strftime(f"%d{suffix} of %B %Y")
