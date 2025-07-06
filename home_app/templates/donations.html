@@ -3,9 +3,9 @@
 
 {% block content %}
 <div class="container mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6">Manage Donations</h1>
+    <h1 class="text-3xl font-bold mb-6">Manage Offers</h1>
 
-    <!-- Donation Form -->
+    <!-- Offer Form -->
     <form method="POST" class="space-y-4">
         {% csrf_token %}
         <div class="flex flex-wrap -mx-2">
@@ -30,7 +30,7 @@
                 {{ form.upi_id }}
             </div>
             <div class="w-full md:w-1/2 px-2 mb-4">
-                <label for="id_donation_date" class="block text-sm font-medium text-gray-700">Donation Date</label>
+                <label for="id_donation_date" class="block text-sm font-medium text-gray-700">Offer Date</label>
                 {{ form.donation_date }}
             </div>
             <div class="w-full md:w-1/2 px-2 mb-4">
@@ -88,7 +88,7 @@
                     <td class="py-2 px-4 border">{{ value.purpose }}</td>
                     <td class="py-2 px-4 border">{{ value.is_anonymous }}</td>
                     <td class="py-2 px-4 border"> 
-                        <a href="?donation_id={{ value.id }}" class="text-blue-500 hover:underline">Edit</a>
+                        <a href="?offer_id={{ value.id }}" class="text-blue-500 hover:underline">Edit</a>
                     </td>
               
                 </tr>
@@ -114,7 +114,7 @@
 {% block extra_scripts %}
 <script>
 document.getElementById('id_member').addEventListener('change', function() {
-    window.location.href = '{% url "donations" %}?member=' + this.value;
+    window.location.href = '{% url "offers" %}?member=' + this.value;
 });
 </script>
 {% endblock %}
